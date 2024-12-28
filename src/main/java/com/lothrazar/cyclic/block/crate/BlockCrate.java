@@ -3,13 +3,14 @@ package com.lothrazar.cyclic.block.crate;
 import java.util.ArrayList;
 import java.util.List;
 import com.lothrazar.cyclic.block.BlockCyclic;
-import com.lothrazar.cyclic.registry.ContainerScreenRegistry;
-import com.lothrazar.cyclic.util.UtilItemStack;
+import com.lothrazar.cyclic.registry.MenuTypeRegistry;
+import com.lothrazar.cyclic.util.ItemStackUtil;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
@@ -31,8 +32,17 @@ public class BlockCrate extends BlockCyclic {
   }
 
   @Override
+  public boolean hasAnalogOutputSignal(BlockState bs) {
+    return true;
+  }
+
+  @Override
+  public int getAnalogOutputSignal(BlockState st, Level level, BlockPos pos) {
+    return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(level.getBlockEntity(pos));
+  }
+
+  @Override
   public void onRemove(BlockState state, Level worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-    //    if (state.hasTileEntity() && (!state.is(newState.getBlock()) || !newState.hasTileEntity())) {
     if (!state.is(newState.getBlock())) {
       worldIn.removeBlockEntity(pos);
     }
@@ -40,7 +50,7 @@ public class BlockCrate extends BlockCyclic {
 
   @Override
   public void registerClient() {
-    MenuScreens.register(ContainerScreenRegistry.CRATE, ScreenCrate::new);
+    MenuScreens.register(MenuTypeRegistry.CRATE.get(), ScreenCrate::new);
   }
 
   @Override
@@ -67,8 +77,7 @@ public class BlockCrate extends BlockCyclic {
   public void playerDestroy(Level world, Player player, BlockPos pos, BlockState state, BlockEntity tileentity, ItemStack stackToolUsed) {
     super.playerDestroy(world, player, pos, state, tileentity, stackToolUsed);
     ItemStack newStack = new ItemStack(this);
-    if (tileentity instanceof TileCrate) {
-      TileCrate crate = (TileCrate) tileentity;
+    if (tileentity instanceof TileCrate crate) {
       //read from tile, write to itemstack
       for (int i = 0; i < crate.inventory.getSlots(); i++) {
         CompoundTag nbt = new CompoundTag();
@@ -76,6 +85,6 @@ public class BlockCrate extends BlockCyclic {
         newStack.getOrCreateTag().put(NBTCRATE + i, nbt);
       }
     }
-    UtilItemStack.drop(world, pos, newStack);
+    ItemStackUtil.dropItemStackMotionless(world, pos, newStack);
   }
 }

@@ -26,6 +26,7 @@ package com.lothrazar.cyclic.enchant;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentCategory;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import net.minecraftforge.common.MinecraftForge;
@@ -40,12 +41,37 @@ public class LifeLeechEnchant extends EnchantmentCyclic {
 
   public LifeLeechEnchant(Rarity rarityIn, EnchantmentCategory typeIn, EquipmentSlot... slots) {
     super(rarityIn, typeIn, slots);
-    MinecraftForge.EVENT_BUS.register(this);
+    if (isEnabled()) MinecraftForge.EVENT_BUS.register(this);
   }
 
   @Override
   public boolean isEnabled() {
     return CFG.get();
+  }
+
+  @Override
+  public boolean isTradeable() {
+    return isEnabled() && super.isTradeable();
+  }
+
+  @Override
+  public boolean isDiscoverable() {
+    return isEnabled() && super.isDiscoverable();
+  }
+
+  @Override
+  public boolean isAllowedOnBooks() {
+    return isEnabled() && super.isAllowedOnBooks();
+  }
+
+  @Override
+  public boolean canEnchant(ItemStack stack) {
+    return isEnabled() && super.canEnchant(stack);
+  }
+
+  @Override
+  public boolean canApplyAtEnchantingTable(ItemStack stack) {
+    return isEnabled() && super.canApplyAtEnchantingTable(stack);
   }
 
   @Override
@@ -69,13 +95,9 @@ public class LifeLeechEnchant extends EnchantmentCyclic {
         int min = level; //so if restore starts at 4 the rand will be [min,restore]
         restore = attacker.getCommandSenderWorld().random.nextInt(restore + 1) + min;
         if (restore > 0) {
-          //hunger
-          attacker.getFoodData().eat(restore, 0.5F);
           //hearts
           if (attacker.getHealth() < attacker.getMaxHealth()) {
             attacker.heal(restore);
-            //            UtilParticle.spawnParticle(target.getEntityWorld(), EnumParticleTypes.HEART, attacker.getPosition().up(1));
-            //            UtilParticle.spawnParticle(attacker.getEntityWorld(), EnumParticleTypes.HEART, attacker.getPosition().up(1));
           }
         }
       }
@@ -84,7 +106,9 @@ public class LifeLeechEnchant extends EnchantmentCyclic {
 
   @SubscribeEvent
   public void onAttackEntity(AttackEntityEvent event) {
-    //    EntityLivingBase target = (EntityLivingBase) event.getTarget();
+    if (!isEnabled()) {
+      return;
+    }
     Player attacker = event.getPlayer();
     int level = getCurrentLevelTool(attacker);
     if (level > 0 && attacker.getHealth() < attacker.getMaxHealth()) {

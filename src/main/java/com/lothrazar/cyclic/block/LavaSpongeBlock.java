@@ -1,10 +1,11 @@
 package com.lothrazar.cyclic.block;
 
 import java.util.List;
-import com.lothrazar.cyclic.util.UtilShape;
+import com.lothrazar.cyclic.util.ShapeUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
@@ -15,7 +16,7 @@ public class LavaSpongeBlock extends BlockCyclic {
   public static IntValue RADIUS;
 
   public LavaSpongeBlock(Properties properties) {
-    super(properties.randomTicks().strength(0.7F));
+    super(properties.randomTicks().strength(0.7F).sound(SoundType.GRASS));
   }
 
   @Override
@@ -32,7 +33,7 @@ public class LavaSpongeBlock extends BlockCyclic {
 
   public void tryAbsorbLava(Level world, BlockPos pos) {
     int r = RADIUS.get();
-    List<BlockPos> around = UtilShape.cubeSquareBase(pos.below(r / 2), r, r);
+    List<BlockPos> around = ShapeUtil.cubeSquareBase(pos.below(r / 2), r, r);
     final int max = world.random.nextInt(10) + around.size() / 3;
     int current = 0;
     for (BlockPos posSide : around) {

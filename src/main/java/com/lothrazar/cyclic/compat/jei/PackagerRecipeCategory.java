@@ -1,18 +1,17 @@
 package com.lothrazar.cyclic.compat.jei;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import com.lothrazar.cyclic.ModCyclic;
-import com.lothrazar.cyclic.block.packager.TilePackager;
+import com.lothrazar.cyclic.block.packager.UtilPackager;
 import com.lothrazar.cyclic.registry.BlockRegistry;
-import com.lothrazar.cyclic.util.UtilChat;
+import com.lothrazar.cyclic.util.ChatUtil;
 import mezz.jei.api.constants.VanillaTypes;
-import mezz.jei.api.gui.IRecipeLayout;
+import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
-import mezz.jei.api.gui.ingredient.IGuiItemStackGroup;
 import mezz.jei.api.helpers.IGuiHelper;
-import mezz.jei.api.ingredients.IIngredients;
+import mezz.jei.api.recipe.IFocusGroup;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
@@ -23,18 +22,19 @@ import net.minecraft.world.item.crafting.Ingredient;
 
 public class PackagerRecipeCategory implements IRecipeCategory<CraftingRecipe> {
 
-  static final ResourceLocation ID = new ResourceLocation("cyclic:packager");
+  private static final ResourceLocation ID = new ResourceLocation(ModCyclic.MODID, "packager");
+  static final RecipeType<CraftingRecipe> TYPE = new RecipeType<>(ID, CraftingRecipe.class);
   private IDrawable gui;
   private IDrawable icon;
 
   public PackagerRecipeCategory(IGuiHelper helper) {
     gui = helper.drawableBuilder(new ResourceLocation(ModCyclic.MODID, "textures/jei/packager.png"), 0, 0, 118, 32).setTextureSize(118, 32).build();
-    icon = helper.createDrawableIngredient(VanillaTypes.ITEM, new ItemStack(BlockRegistry.PACKAGER.get()));
+    icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(BlockRegistry.PACKAGER.get()));
   }
 
   @Override
   public Component getTitle() {
-    return UtilChat.ilang(BlockRegistry.PACKAGER.get().getDescriptionId());
+    return ChatUtil.ilang(BlockRegistry.PACKAGER.get().getDescriptionId());
   }
 
   @Override
@@ -58,42 +58,20 @@ public class PackagerRecipeCategory implements IRecipeCategory<CraftingRecipe> {
   }
 
   @Override
-  public RecipeType getRecipeType() {
-    return new RecipeType(getUid(), getRecipeClass());
+  public RecipeType<CraftingRecipe> getRecipeType() {
+    return TYPE;
   }
 
   @Override
   public boolean isHandled(CraftingRecipe recipe) {
-    return TilePackager.isRecipeValid(recipe);
+    return UtilPackager.isRecipeValid(recipe);
   }
 
   @Override
-  public void setIngredients(CraftingRecipe recipe, IIngredients ingredients) {
-    //    if (!TilePackager.isRecipeValid(recipe)) {
-    //      return;
-    //    }
+  public void setRecipe(IRecipeLayoutBuilder builder, CraftingRecipe recipe, IFocusGroup focuses) {
     if (recipe.getIngredients().size() == 0) {
       return;
     }
-    List<List<ItemStack>> in = new ArrayList<>();
-    List<ItemStack> stuff = new ArrayList<>();
-    if (recipe.getIngredients().size() == 0) {
-      return;
-    }
-    Ingredient ingr = recipe.getIngredients().get(0);
-    Collections.addAll(stuff, ingr.getItems());
-    in.add(stuff);
-    ingredients.setInputLists(VanillaTypes.ITEM, in);
-  }
-
-  @Override
-  public void setRecipe(IRecipeLayout recipeLayout, CraftingRecipe recipe, IIngredients ingredients) {
-    //    if (!TilePackager.isRecipeValid(recipe)) {
-    //      return;
-    //    }
-    List<List<ItemStack>> inputs = ingredients.getInputs(VanillaTypes.ITEM);
-    IGuiItemStackGroup guiItemStacks = recipeLayout.getItemStacks();
-    guiItemStacks.init(0, true, 5, 6);
     int sz = 0; // recipe.getIngredients().size();
     for (Ingredient wtf : recipe.getIngredients()) {
       if (wtf != Ingredient.EMPTY && wtf.getItems().length > 0) {
@@ -101,7 +79,8 @@ public class PackagerRecipeCategory implements IRecipeCategory<CraftingRecipe> {
       }
     }
     List<ItemStack> haxor = new ArrayList<>();
-    for (ItemStack st : inputs.get(0)) {
+    Ingredient ingredientKey = recipe.getIngredients().get(0);
+    for (ItemStack st : ingredientKey.getItems()) {
       if (st.isEmpty()) {
         continue;
       }
@@ -109,8 +88,7 @@ public class PackagerRecipeCategory implements IRecipeCategory<CraftingRecipe> {
       cpy.setCount(sz);
       haxor.add(cpy);
     }
-    guiItemStacks.set(0, haxor);
-    guiItemStacks.init(1, false, 67, 8);
-    guiItemStacks.set(1, recipe.getResultItem());
+    builder.addSlot(RecipeIngredientRole.INPUT, 6, 7).addIngredients(VanillaTypes.ITEM_STACK, haxor);
+    builder.addSlot(RecipeIngredientRole.OUTPUT, 69, 8).addItemStack(recipe.getResultItem());
   }
 }

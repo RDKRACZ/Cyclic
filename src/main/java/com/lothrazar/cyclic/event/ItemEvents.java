@@ -1,11 +1,13 @@
 package com.lothrazar.cyclic.event;
 
+import com.lothrazar.cyclic.ModCyclic;
 import com.lothrazar.cyclic.api.IEntityInteractable;
 import com.lothrazar.cyclic.block.cable.CableBase;
+import com.lothrazar.cyclic.block.facade.IBlockFacade;
 import com.lothrazar.cyclic.block.scaffolding.ItemScaffolding;
+import com.lothrazar.cyclic.config.ConfigRegistry;
 import com.lothrazar.cyclic.data.DataTags;
-import com.lothrazar.cyclic.enchant.Multishot;
-import com.lothrazar.cyclic.item.AntimatterEvaporatorWandItem;
+import com.lothrazar.cyclic.enchant.MultiBowEnchant;
 import com.lothrazar.cyclic.item.SleepingMatItem;
 import com.lothrazar.cyclic.item.animal.ItemHorseEnder;
 import com.lothrazar.cyclic.item.bauble.CharmBase;
@@ -13,25 +15,30 @@ import com.lothrazar.cyclic.item.bauble.SoulstoneCharm;
 import com.lothrazar.cyclic.item.builder.BuilderActionType;
 import com.lothrazar.cyclic.item.builder.BuilderItem;
 import com.lothrazar.cyclic.item.datacard.ShapeCard;
-import com.lothrazar.cyclic.item.enderbook.EnderBookItem;
+import com.lothrazar.cyclic.item.elemental.AntimatterEvaporatorWandItem;
+import com.lothrazar.cyclic.item.ender.EnderBookItem;
 import com.lothrazar.cyclic.item.equipment.GlowingHelmetItem;
 import com.lothrazar.cyclic.item.equipment.ShieldCyclicItem;
 import com.lothrazar.cyclic.item.food.LoftyStatureApple;
 import com.lothrazar.cyclic.item.storagebag.ItemStorageBag;
+import com.lothrazar.cyclic.net.BlockFacadeMessage;
 import com.lothrazar.cyclic.registry.BlockRegistry;
 import com.lothrazar.cyclic.registry.EnchantRegistry;
 import com.lothrazar.cyclic.registry.ItemRegistry;
-import com.lothrazar.cyclic.registry.PotionRegistry;
+import com.lothrazar.cyclic.registry.PacketRegistry;
+import com.lothrazar.cyclic.registry.PotionEffectRegistry;
 import com.lothrazar.cyclic.registry.SoundRegistry;
 import com.lothrazar.cyclic.util.AttributesUtil;
 import com.lothrazar.cyclic.util.CharmUtil;
-import com.lothrazar.cyclic.util.UtilChat;
-import com.lothrazar.cyclic.util.UtilEntity;
-import com.lothrazar.cyclic.util.UtilItemStack;
-import com.lothrazar.cyclic.util.UtilSound;
-import com.lothrazar.cyclic.util.UtilWorld;
+import com.lothrazar.cyclic.util.ChatUtil;
+import com.lothrazar.cyclic.util.EntityUtil;
+import com.lothrazar.cyclic.util.ItemStackUtil;
+import com.lothrazar.cyclic.util.LevelWorldUtil;
+import com.lothrazar.cyclic.util.SoundUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -49,13 +56,18 @@ import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -85,7 +97,7 @@ public class ItemEvents {
     if (shield.getItem() instanceof ShieldCyclicItem shieldItem) {
       if (event.getEntityLiving() instanceof Player playerIn) {
         if (playerIn.getCooldowns().isOnCooldown(shield.getItem())) {
-          UtilSound.playSound(playerIn, SoundEvents.SHIELD_BREAK);
+          SoundUtil.playSound(playerIn, SoundEvents.SHIELD_BREAK);
           event.setCanceled(true);
           return;
         }
@@ -120,7 +132,7 @@ public class ItemEvents {
       if (!find.isEmpty()) {
         // This is by default 1.5F for ciritcal hits and 1F for normal hits . 
         event.setDamageModifier(3F);
-        UtilItemStack.damageItem(ply, find);
+        ItemStackUtil.damageItem(ply, find);
       }
     }
   }
@@ -128,23 +140,23 @@ public class ItemEvents {
   @SubscribeEvent
   public void onArrowLooseEvent(ArrowLooseEvent event) {
     //this event is only used for multishot enchantment 
-    if (!Multishot.CFG.get()) {
+    if (!MultiBowEnchant.CFG.get()) {
       return;
     }
     ItemStack stackBow = event.getBow();
     Player player = event.getPlayer();
     Level worldIn = player.level;
     if (worldIn.isClientSide == false) {
-      int level = EnchantRegistry.MULTIBOW.getCurrentLevelTool(stackBow);
+      int level = EnchantRegistry.MULTISHOT.getCurrentLevelTool(stackBow);
       if (level <= 0) {
         return;
       }
       //use cross product to push arrows out to left and right
-      Vec3 playerDirection = UtilEntity.lookVector(player.getYRot(), player.getXRot());
+      Vec3 playerDirection = EntityUtil.lookVector(player.getYRot(), player.getXRot());
       Vec3 left = playerDirection.cross(new Vec3(0, 1, 0));
       Vec3 right = playerDirection.cross(new Vec3(0, -1, 0));
-      Multishot.spawnArrow(worldIn, player, stackBow, event.getCharge(), left.normalize());
-      Multishot.spawnArrow(worldIn, player, stackBow, event.getCharge(), right.normalize());
+      MultiBowEnchant.spawnArrow(worldIn, player, stackBow, event.getCharge(), left.normalize());
+      MultiBowEnchant.spawnArrow(worldIn, player, stackBow, event.getCharge(), right.normalize());
     }
   }
 
@@ -152,10 +164,16 @@ public class ItemEvents {
   public void onLivingKnockBackEvent(LivingKnockBackEvent event) {
     if (event.getEntityLiving() instanceof Player) {
       Player ply = (Player) event.getEntityLiving();
+      if (ply.isBlocking()) {
+        ItemStack held = ply.getItemInHand(ply.getUsedItemHand());
+        if (held.getItem() instanceof ShieldCyclicItem shieldType) {
+          shieldType.onKnockback(event);
+        }
+      }
       ItemStack find = CharmUtil.getIfEnabled(ply, ItemRegistry.CHARM_KNOCKBACK_RESIST.get());
       if (!find.isEmpty()) {
         event.setCanceled(true);
-        UtilItemStack.damageItem(ply, find);
+        ItemStackUtil.damageItem(ply, find);
       }
     }
   }
@@ -178,7 +196,7 @@ public class ItemEvents {
         AbstractArrow arroww = (AbstractArrow) arrow;
         double boost = arroww.getBaseDamage() / 2;
         arroww.setBaseDamage(arroww.getBaseDamage() + boost);
-        UtilItemStack.damageItem(ply, find);
+        ItemStackUtil.damageItem(ply, find);
       }
       find = CharmUtil.getIfEnabled(ply, ItemRegistry.QUIVER_LIT.get());
       if (!find.isEmpty() && world.random.nextDouble() < 0.25) {
@@ -191,7 +209,7 @@ public class ItemEvents {
           LightningBolt lightningboltentity = EntityType.LIGHTNING_BOLT.create(world);
           lightningboltentity.moveTo(p.getX(), p.getY(), p.getZ());
           world.addFreshEntity(lightningboltentity);
-          UtilItemStack.damageItem(ply, find);
+          ItemStackUtil.damageItem(ply, find);
         }
       }
     }
@@ -204,7 +222,7 @@ public class ItemEvents {
       ItemStack find = CharmUtil.getIfEnabled(ply, ItemRegistry.CHARM_ANTIPOTION.get());
       if (!find.isEmpty()) {
         event.getPotionEffect().duration = 0;
-        UtilItemStack.damageItem(ply, find);
+        ItemStackUtil.damageItem(ply, find);
       }
       find = CharmUtil.getIfEnabled(ply, ItemRegistry.CHARM_STEALTHPOTION.get());
       if (!find.isEmpty()) {
@@ -217,7 +235,7 @@ public class ItemEvents {
       if (!find.isEmpty()) {
         int boost = event.getPotionEffect().duration / 2;
         event.getPotionEffect().duration += boost;
-        UtilItemStack.damageItem(ply, find);
+        ItemStackUtil.damageItem(ply, find);
       }
     }
   }
@@ -259,6 +277,7 @@ public class ItemEvents {
       }
       else if (src == DamageSource.LAVA || src == DamageSource.IN_FIRE || src == DamageSource.ON_FIRE) {
         this.damageFinder(event, player, ItemRegistry.CHARM_FIRE.get(), 0);
+        this.damageFinder(event, player, ItemRegistry.CHARM_ULTIMATE.get(), 0);
       }
     }
     else if (src.getEntity() instanceof Player) {
@@ -268,7 +287,7 @@ public class ItemEvents {
       if (!find.isEmpty() && ply.level.random.nextDouble() < 0.25F) {
         int seconds = 2 + ply.level.random.nextInt(4);
         event.getEntityLiving().addEffect(new MobEffectInstance(MobEffects.POISON, 20 * seconds, 0));
-        UtilItemStack.damageItem(ply, find);
+        ItemStackUtil.damageItem(ply, find);
       }
       if (ply.getUsedItemHand() != null && ply.getItemInHand(ply.getUsedItemHand()).isEmpty()) {
         //            ModCyclic.LOGGER.info("EMPTY hand damage");
@@ -284,7 +303,7 @@ public class ItemEvents {
       if (amt <= 0) {
         event.setCanceled(true);
       }
-      UtilItemStack.damageItem(player, find);
+      ItemStackUtil.damageItem(player, find);
       return true;
     }
     return false;
@@ -318,12 +337,8 @@ public class ItemEvents {
   public void onEntityUpdate(LivingUpdateEvent event) {
     LivingEntity liv = event.getEntityLiving();
     tryItemHorseEnder(liv);
-    if (liv instanceof Player) {
-      Player player = (Player) liv;
-      CharmBase.charmSpeed(player);
-      CharmBase.charmLuck(player);
-      CharmBase.charmAttackSpeed(player);
-      CharmBase.charmExpSpeed(player);
+    if (liv instanceof Player player) {
+      CharmBase.onEntityUpdate(player);
       //step
       LoftyStatureApple.onUpdate(player);
       GlowingHelmetItem.onEntityUpdate(event);
@@ -348,7 +363,7 @@ public class ItemEvents {
           && liv.getAirSupply() < liv.getMaxAirSupply()
           && !liv.hasEffect(MobEffects.WATER_BREATHING)) {
         liv.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 20 * 60, 4));
-        liv.addEffect(new MobEffectInstance(PotionRegistry.PotionEffects.SWIMSPEED, 20 * 60, 1));
+        liv.addEffect(new MobEffectInstance(PotionEffectRegistry.SWIMSPEED.get(), 20 * 60, 1));
         ItemHorseEnder.onSuccess(liv);
       }
       if (liv.isOnFire()
@@ -379,32 +394,35 @@ public class ItemEvents {
     Level world = event.getWorld();
     BlockPos pos = event.getPos();
     BlockState state = world.getBlockState(pos);
-    if (state.getBlock() == Blocks.PODZOL && world.isEmptyBlock(pos.above())) {
-      event.setResult(Result.ALLOW);
-      world.setBlockAndUpdate(pos.above(), BlockRegistry.FLOWER_CYAN.get().defaultBlockState());
+    if (ConfigRegistry.CYAN_PODZOL_LEGACY.get()) {
+      //legacy feature, i meant to remove it in minecraft 1.16.2ish but forgot so now its a config
+      if (state.getBlock() == Blocks.PODZOL && world.isEmptyBlock(pos.above())) {
+        event.setResult(Result.ALLOW);
+        world.setBlockAndUpdate(pos.above(), BlockRegistry.FLOWER_CYAN.get().defaultBlockState());
+      }
     }
-    else if (state.getBlock() == BlockRegistry.FLOWER_CYAN.get()) {
+    if (state.getBlock() == BlockRegistry.FLOWER_CYAN.get()) {
       event.setResult(Result.ALLOW);
       if (world.random.nextDouble() < 0.5) {
-        UtilItemStack.drop(world, pos, new ItemStack(BlockRegistry.FLOWER_CYAN.get()));
+        ItemStackUtil.drop(world, pos, new ItemStack(BlockRegistry.FLOWER_CYAN.get()));
       }
     }
     else if (state.getBlock() == BlockRegistry.FLOWER_PURPLE_TULIP.get()) {
       event.setResult(Result.ALLOW);
       if (world.random.nextDouble() < 0.25) {
-        UtilItemStack.drop(world, pos, new ItemStack(BlockRegistry.FLOWER_PURPLE_TULIP.get()));
+        ItemStackUtil.drop(world, pos, new ItemStack(BlockRegistry.FLOWER_PURPLE_TULIP.get()));
       }
     }
     else if (state.getBlock() == BlockRegistry.FLOWER_ABSALON_TULIP.get()) {
       event.setResult(Result.ALLOW);
       if (world.random.nextDouble() < 0.25) {
-        UtilItemStack.drop(world, pos, new ItemStack(BlockRegistry.FLOWER_ABSALON_TULIP.get()));
+        ItemStackUtil.drop(world, pos, new ItemStack(BlockRegistry.FLOWER_ABSALON_TULIP.get()));
       }
     }
     else if (state.getBlock() == BlockRegistry.FLOWER_LIME_CARNATION.get()) {
       event.setResult(Result.ALLOW);
       if (world.random.nextDouble() < 0.25) {
-        UtilItemStack.drop(world, pos, new ItemStack(BlockRegistry.FLOWER_LIME_CARNATION.get()));
+        ItemStackUtil.drop(world, pos, new ItemStack(BlockRegistry.FLOWER_LIME_CARNATION.get()));
       }
     }
   }
@@ -433,8 +451,10 @@ public class ItemEvents {
         //cyclic cable
         //test? maybe config disable? 
         player.swing(event.getHand());
-        event.getWorld().destroyBlock(event.getPos(), true);
+        CableBase.crouchClick(event, event.getWorld().getBlockState(event.getPos()));
+        //        event.getWorld().destroyBlock(event.getPos(), true);
         event.setCanceled(true);
+        SoundUtil.playSound(player, SoundRegistry.THUNK.get(), 0.2F, 1F);
       }
     }
   }
@@ -442,11 +462,11 @@ public class ItemEvents {
   private void scaffoldHit(RightClickBlock event) {
     ItemScaffolding item = (ItemScaffolding) event.getItemStack().getItem();
     Direction opp = event.getFace().getOpposite();
-    BlockPos dest = UtilWorld.nextReplaceableInDirection(event.getWorld(), event.getPos(), opp, 16, item.getBlock());
+    BlockPos dest = LevelWorldUtil.nextReplaceableInDirection(event.getWorld(), event.getPos(), opp, 16, item.getBlock());
     if (event.getWorld().isEmptyBlock(dest)) {
       event.getWorld().setBlockAndUpdate(dest, item.getBlock().defaultBlockState());
       ItemStack stac = event.getPlayer().getItemInHand(event.getHand());
-      UtilItemStack.shrink(event.getPlayer(), stac);
+      ItemStackUtil.shrink(event.getPlayer(), stac);
       event.setCanceled(true);
     }
   }
@@ -461,17 +481,28 @@ public class ItemEvents {
 
   @SubscribeEvent
   public void onHit(PlayerInteractEvent.LeftClickBlock event) {
+    //<<<<<<< HEAD
+    //    Player player = event.getPlayer();
+    //    ItemStack held = player.getItemInHand(event.getHand());
+    //    if (held.isEmpty()) {
+    //      return;
+    //    }
+    //    Level world = player.getCommandSenderWorld();
+    //=======
     Player player = event.getPlayer();
     ItemStack held = player.getItemInHand(event.getHand());
-    if (held.isEmpty()) {
-      return;
-    }
-    Level world = player.getCommandSenderWorld();
+    var world = player.getCommandSenderWorld();
+    BlockState target = world.getBlockState(event.getPos());
     ///////////// shape
     if (held.getItem() instanceof ShapeCard && player.isCrouching()) {
-      BlockState target = world.getBlockState(event.getPos());
       ShapeCard.setBlockState(held, target);
-      UtilChat.sendStatusMessage(player, target.getBlock().getDescriptionId());
+      ChatUtil.sendStatusMessage(player, target.getBlock().getDescriptionId());
+    }
+    if (player.isCrouching()
+        && target.getBlock() instanceof IBlockFacade) {
+      //
+      onHitFacadeHandler(event, player, held, target);
+      //
     }
     ///////////////// builders
     if (held.getItem() instanceof BuilderItem) {
@@ -483,24 +514,64 @@ public class ItemEvents {
       event.setCanceled(true);
       if (player.isCrouching()) {
         //pick out target block
-        BlockState target = world.getBlockState(event.getPos());
+        //        BlockState target = world.getBlockState(event.getPos());
         BuilderActionType.setBlockState(held, target);
-        UtilChat.sendStatusMessage(player, target.getBlock().getDescriptionId());
+        ChatUtil.sendStatusMessage(player, target.getBlock().getDescriptionId());
         event.setCanceled(true);
-        UtilSound.playSound(player, SoundRegistry.DCOIN, 0.3F, 1F);
+        SoundUtil.playSound(player, SoundRegistry.DCOIN.get(), 0.3F, 1F);
       }
       else {
         //change size
         if (!world.isClientSide) {
           BuilderActionType.toggle(held);
         }
-        UtilSound.playSound(player, SoundRegistry.TOOL_MODE);
-        UtilChat.sendStatusMessage(player, UtilChat.lang(BuilderActionType.getName(held)));
+        SoundUtil.playSound(player, SoundRegistry.TOOL_MODE.get());
+        ChatUtil.sendStatusMessage(player, ChatUtil.lang(BuilderActionType.getName(held)));
         event.setCanceled(true);
       }
     }
     if (held.getItem() instanceof AntimatterEvaporatorWandItem) {
       AntimatterEvaporatorWandItem.toggleMode(player, held);
+    }
+  }
+
+  private void onHitFacadeHandler(PlayerInteractEvent.LeftClickBlock event, Player player, ItemStack held, BlockState target) {
+    if (held.isEmpty() && event.getWorld().isClientSide()) {
+      PacketRegistry.INSTANCE.sendToServer(new BlockFacadeMessage(event.getPos(), true));
+    }
+    else {
+      Block block = Block.byItem(held.getItem()); // getBlockFromItem
+      if (block == null || block == Blocks.AIR || block == target.getBlock()) {
+        return;
+      }
+      if (target.getBlock() instanceof CableBase) {
+        if (!ConfigRegistry.CABLE_FACADES.get()) {
+          return;
+        }
+      }
+      if (!ConfigRegistry.isFacadeAllowed(held)) {
+        ModCyclic.LOGGER.info("not allowed to use this item as a facade from config: " + held.getItem());
+        return;
+      }
+      if (event.getWorld().isClientSide()) {
+        onHitFacadeClient(event, player, held, block);
+      }
+    }
+    //cancel the event so creative players will not break it
+    event.setCanceled(true);
+  }
+
+  @OnlyIn(Dist.CLIENT)
+  private void onHitFacadeClient(PlayerInteractEvent.LeftClickBlock event, Player player, ItemStack held, Block block) {
+    //pick the block, write to tags, and send to server
+    boolean pickFluids = false;
+    double reach = player.getReachDistance();
+    HitResult bhr = player.pick(reach, 1, pickFluids); // BlockHitResult
+    if (bhr.getType() == HitResult.Type.BLOCK) {
+      BlockPlaceContext context = new BlockPlaceContext(player, event.getHand(), held, (BlockHitResult) bhr); // BlockItemUseContext
+      BlockState facadeState = block.getStateForPlacement(context);
+      CompoundTag tags = (facadeState == null) ? null : NbtUtils.writeBlockState(facadeState);
+      PacketRegistry.INSTANCE.sendToServer(new BlockFacadeMessage(event.getPos(), tags));
     }
   }
 

@@ -2,9 +2,9 @@ package com.lothrazar.cyclic.block.crusher;
 
 import java.util.List;
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
-import com.lothrazar.cyclic.capabilities.CustomEnergyStorage;
 import com.lothrazar.cyclic.capabilities.ItemStackHandlerWrapper;
-import com.lothrazar.cyclic.recipe.CyclicRecipeType;
+import com.lothrazar.cyclic.capabilities.block.CustomEnergyStorage;
+import com.lothrazar.cyclic.registry.CyclicRecipeType;
 import com.lothrazar.cyclic.registry.TileRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -41,7 +41,7 @@ public class TileCrusher extends TileBlockEntityCyclic implements MenuProvider {
   private LazyOptional<IItemHandler> inventoryCap = LazyOptional.of(() -> inventory);
   private int burnTimeMax = 0; //only non zero if processing
   private int burnTime = 0; //how much of current fuel is left
-  private RecipeCrusher<?> currentRecipe;
+  private RecipeCrusher currentRecipe;
 
   public TileCrusher(BlockPos pos, BlockState state) {
     super(TileRegistry.CRUSHER.get(), pos, state);
@@ -154,8 +154,8 @@ public class TileCrusher extends TileBlockEntityCyclic implements MenuProvider {
       return;
     }
     currentRecipe = null;
-    List<RecipeCrusher<TileBlockEntityCyclic>> recipes = level.getRecipeManager().getAllRecipesFor(CyclicRecipeType.CRUSHER);
-    for (RecipeCrusher<?> rec : recipes) {
+    List<RecipeCrusher> recipes = level.getRecipeManager().getAllRecipesFor(CyclicRecipeType.CRUSHER.get());
+    for (RecipeCrusher rec : recipes) {
       if (rec.matches(this, level)) {
         this.currentRecipe = rec;
         this.burnTimeMax = this.currentRecipe.energy.getTicks();

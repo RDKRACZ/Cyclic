@@ -2,8 +2,8 @@ package com.lothrazar.cyclic.block.generatorfuel;
 
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
 import com.lothrazar.cyclic.block.battery.TileBattery;
-import com.lothrazar.cyclic.capabilities.CustomEnergyStorage;
 import com.lothrazar.cyclic.capabilities.ItemStackHandlerWrapper;
+import com.lothrazar.cyclic.capabilities.block.CustomEnergyStorage;
 import com.lothrazar.cyclic.registry.TileRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -103,7 +103,13 @@ public class TileGeneratorFuel extends TileBlockEntityCyclic implements MenuProv
       // BURN IT
       this.burnTimeMax = burnTimeTicks;
       this.burnTime = this.burnTimeMax;
-      stack.shrink(1);
+      if (stack.getCount() == 1 && stack.hasContainerItem()) {
+        inputSlots.setStackInSlot(0, stack.getContainerItem().copy());
+      }
+      else {
+        stack.shrink(1);
+      }
+      updateComparatorOutputLevel();
     }
   }
 
@@ -161,7 +167,7 @@ public class TileGeneratorFuel extends TileBlockEntityCyclic implements MenuProv
       case FLOWING:
         return this.flowing;
       default:
-        break;
+      break;
     }
     return 0;
   }
@@ -171,16 +177,16 @@ public class TileGeneratorFuel extends TileBlockEntityCyclic implements MenuProv
     switch (Fields.values()[field]) {
       case REDSTONE:
         this.needsRedstone = value % 2;
-        break;
+      break;
       case TIMER:
         this.burnTime = value;
-        break;
+      break;
       case BURNMAX:
         this.burnTimeMax = value;
-        break;
+      break;
       case FLOWING:
         this.flowing = value;
-        break;
+      break;
     }
   }
 

@@ -2,8 +2,8 @@ package com.lothrazar.cyclic.block.magnet;
 
 import com.lothrazar.cyclic.block.BlockCyclic;
 import com.lothrazar.cyclic.registry.TileRegistry;
-import com.lothrazar.cyclic.util.UtilParticle;
-import com.lothrazar.cyclic.util.UtilSound;
+import com.lothrazar.cyclic.util.ParticleUtil;
+import com.lothrazar.cyclic.util.SoundUtil;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
@@ -17,6 +17,7 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -32,7 +33,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 
-public class BlockMagnetPanel extends BlockCyclic {
+public class BlockMagnetPanel extends BlockCyclic implements SimpleWaterloggedBlock {
 
   public static IntValue RADIUS;
   public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
@@ -47,8 +48,8 @@ public class BlockMagnetPanel extends BlockCyclic {
   public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
     if (hand == InteractionHand.MAIN_HAND) {
       world.setBlockAndUpdate(pos, state.setValue(LIT, !state.getValue(LIT)));
-      UtilSound.playSound(world, pos, SoundEvents.FIRE_EXTINGUISH);
-      UtilParticle.spawnParticle(world, ParticleTypes.SPLASH, pos.above(), 12);
+      SoundUtil.playSound(world, pos, SoundEvents.FIRE_EXTINGUISH);
+      ParticleUtil.spawnParticle(world, ParticleTypes.SPLASH, pos.above(), 12);
       return InteractionResult.SUCCESS;
     }
     return super.use(state, world, pos, player, hand, result);

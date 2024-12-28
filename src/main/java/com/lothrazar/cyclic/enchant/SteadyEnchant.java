@@ -23,8 +23,8 @@
  ******************************************************************************/
 package com.lothrazar.cyclic.enchant;
 
-import com.lothrazar.cyclic.ModCyclic;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentCategory;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import net.minecraftforge.common.MinecraftForge;
@@ -38,7 +38,32 @@ public class SteadyEnchant extends EnchantmentCyclic {
 
   public SteadyEnchant(Rarity rarityIn, EnchantmentCategory typeIn, EquipmentSlot... slots) {
     super(rarityIn, typeIn, slots);
-    MinecraftForge.EVENT_BUS.register(this);
+    if (isEnabled()) MinecraftForge.EVENT_BUS.register(this);
+  }
+
+  @Override
+  public boolean isTradeable() {
+    return isEnabled() && super.isTradeable();
+  }
+
+  @Override
+  public boolean isDiscoverable() {
+    return isEnabled() && super.isDiscoverable();
+  }
+
+  @Override
+  public boolean isAllowedOnBooks() {
+    return isEnabled() && super.isAllowedOnBooks();
+  }
+
+  @Override
+  public boolean canEnchant(ItemStack stack) {
+    return isEnabled() && super.canEnchant(stack);
+  }
+
+  @Override
+  public boolean canApplyAtEnchantingTable(ItemStack stack) {
+    return isEnabled() && super.canApplyAtEnchantingTable(stack);
   }
 
   @Override
@@ -54,7 +79,6 @@ public class SteadyEnchant extends EnchantmentCyclic {
   @SubscribeEvent
   public void onLivingKnockBackEvent(LivingKnockBackEvent event) {
     if (this.getCurrentArmorLevel(event.getEntityLiving()) > 0) {
-      ModCyclic.LOGGER.info("steady body  knockback eh"); //steady body
       event.setCanceled(true);
     }
   }

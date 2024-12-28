@@ -2,10 +2,10 @@ package com.lothrazar.cyclic.block.solidifier;
 
 import java.util.List;
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
-import com.lothrazar.cyclic.capabilities.CustomEnergyStorage;
-import com.lothrazar.cyclic.capabilities.FluidTankBase;
 import com.lothrazar.cyclic.capabilities.ItemStackHandlerWrapper;
-import com.lothrazar.cyclic.recipe.CyclicRecipeType;
+import com.lothrazar.cyclic.capabilities.block.CustomEnergyStorage;
+import com.lothrazar.cyclic.capabilities.block.FluidTankBase;
+import com.lothrazar.cyclic.registry.CyclicRecipeType;
 import com.lothrazar.cyclic.registry.TileRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -32,7 +32,6 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 
-@SuppressWarnings("rawtypes")
 public class TileSolidifier extends TileBlockEntityCyclic implements MenuProvider {
 
   static enum Fields {
@@ -198,7 +197,7 @@ public class TileSolidifier extends TileBlockEntityCyclic implements MenuProvide
     currentRecipe = null;
     this.burnTimeMax = 0;
     this.timer = 0;
-    List<RecipeSolidifier<TileBlockEntityCyclic>> recipes = level.getRecipeManager().getAllRecipesFor(CyclicRecipeType.SOLID);
+    List<RecipeSolidifier> recipes = level.getRecipeManager().getAllRecipesFor(CyclicRecipeType.SOLID.get());
     for (RecipeSolidifier rec : recipes) {
       if (rec.matches(this, level)) {
         currentRecipe = rec;
@@ -223,6 +222,7 @@ public class TileSolidifier extends TileBlockEntityCyclic implements MenuProvide
       inputSlots.getStackInSlot(2).shrink(1);
       tank.drain(this.currentRecipe.fluidIngredient.getAmount(), FluidAction.EXECUTE);
       outputSlots.insertItem(0, currentRecipe.getResultItem(), false);
+      updateComparatorOutputLevel();
       return true;
     }
     return false;

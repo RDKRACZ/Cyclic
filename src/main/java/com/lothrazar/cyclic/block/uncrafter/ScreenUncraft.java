@@ -7,7 +7,7 @@ import com.lothrazar.cyclic.gui.EnergyBar;
 import com.lothrazar.cyclic.gui.ScreenBase;
 import com.lothrazar.cyclic.gui.TexturedProgress;
 import com.lothrazar.cyclic.registry.TextureRegistry;
-import com.lothrazar.cyclic.util.UtilChat;
+import com.lothrazar.cyclic.util.ChatUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -51,28 +51,10 @@ public class ScreenUncraft extends ScreenBase<ContainerUncraft> {
     this.drawButtonTooltips(ms, mouseX, mouseY);
     this.drawName(ms, this.title.getString());
     if (menu.tile.getStatus() != UncraftStatusEnum.EMPTY) {
-      String name = UtilChat.lang(
+      String name = ChatUtil.lang(
           ModCyclic.MODID + ".gui.uncrafter." + menu.tile.getStatus().name().toLowerCase());
       int center = (this.getXSize() - this.font.width(name)) / 2;
       drawString(ms, name, center + 37, 24);
-      //=======
-      //    UncraftStatusEnum status = container.tile.getStatus();
-      //    if (status != UncraftStatusEnum.EMPTY && status != UncraftStatusEnum.MATCH) {
-      //      minecraft.getTextureManager().bindTexture(TextureRegistry.WIDGETS);
-      //      blit(ms, 125, 15, 228, 452, 24, 24, 512, 512);
-      //    }
-      //  }
-      //
-      //  @Override
-      //  protected void renderHoveredTooltip(MatrixStack matrixStack, int x, int y) {
-      //    super.renderHoveredTooltip(matrixStack, x, y);
-      //    if (this.isPointInRegion(125, 15, 24, 24, x, y)) {
-      //      UncraftStatusEnum status = container.tile.getStatus();
-      //      if (status != UncraftStatusEnum.EMPTY && status != UncraftStatusEnum.MATCH) {
-      //        TranslationTextComponent comp = new TranslationTextComponent(ModCyclic.MODID + ".gui.uncrafter." + container.tile.getStatus().name().toLowerCase());
-      //        GuiUtils.drawHoveringText(matrixStack, Arrays.asList(comp), x, y, this.width, this.height, 0xFFFFFF, font);
-      //      }
-      //>>>>>>> 54f4445a2d7902cf4ef454efe328c9667ca5b652
     }
   }
 

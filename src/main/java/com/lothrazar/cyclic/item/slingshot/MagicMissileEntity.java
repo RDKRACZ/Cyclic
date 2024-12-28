@@ -1,10 +1,9 @@
 package com.lothrazar.cyclic.item.slingshot;
 
-import java.util.UUID;
 import com.lothrazar.cyclic.ModCyclic;
 import com.lothrazar.cyclic.registry.EntityRegistry;
 import com.lothrazar.cyclic.registry.ItemRegistry;
-import com.lothrazar.cyclic.util.UtilEntity;
+import com.lothrazar.cyclic.util.EntityUtil;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
@@ -24,7 +23,6 @@ public class MagicMissileEntity extends ThrowableItemProjectile {
   private static final int MAX_LIFETIME = 120000;
   private static final int TIME_UNTIL_HOMING = 4;
   private static final double SPEED = 0.95;
-  private UUID targetId = null;
   private LivingEntity targetEntity;
   private int lifetime = MAX_LIFETIME;
 
@@ -33,7 +31,7 @@ public class MagicMissileEntity extends ThrowableItemProjectile {
   }
 
   public MagicMissileEntity(LivingEntity livingEntityIn, Level worldIn) {
-    super(EntityRegistry.MAGIC_MISSILE, livingEntityIn, worldIn);
+    super(EntityRegistry.MAGIC_MISSILE.get(), livingEntityIn, worldIn);
   }
 
   @Override
@@ -43,7 +41,7 @@ public class MagicMissileEntity extends ThrowableItemProjectile {
 
   public void setTarget(LivingEntity target) {
     ModCyclic.LOGGER.info("Magic missile target found " + target);
-    targetId = target == null ? null : target.getUUID();
+    //    targetId = target == null ? null : target.getUUID();
     targetEntity = target;
   }
 
@@ -81,10 +79,10 @@ public class MagicMissileEntity extends ThrowableItemProjectile {
     this.setRot(TIME_UNTIL_HOMING, MAX_LIFETIME);
     // pitch is Y
     //yaw is X 
-    float rotationYaw = (float) Math.toRadians(UtilEntity.yawDegreesBetweenPoints(posX, posY, posZ, targetEntity.position().x, targetEntity.position().y, targetEntity.position().z));
-    float rotationPitch = (float) Math.toRadians(UtilEntity.pitchDegreesBetweenPoints(posX, posY, posZ, targetEntity.position().x, targetEntity.position().y, targetEntity.position().z));
+    float rotationYaw = (float) Math.toRadians(EntityUtil.yawDegreesBetweenPoints(posX, posY, posZ, targetEntity.position().x, targetEntity.position().y, targetEntity.position().z));
+    float rotationPitch = (float) Math.toRadians(EntityUtil.pitchDegreesBetweenPoints(posX, posY, posZ, targetEntity.position().x, targetEntity.position().y, targetEntity.position().z));
     this.setRot(rotationYaw, rotationPitch);
-    Vec3 moveVec = UtilEntity.lookVector(rotationYaw, rotationPitch).scale(SPEED);
+    Vec3 moveVec = EntityUtil.lookVector(rotationYaw, rotationPitch).scale(SPEED);
     this.setDeltaMovement(moveVec);
   }
 

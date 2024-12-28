@@ -24,7 +24,7 @@
 package com.lothrazar.cyclic.enchant;
 
 import com.lothrazar.cyclic.data.Const;
-import com.lothrazar.cyclic.util.UtilEntity;
+import com.lothrazar.cyclic.util.EntityUtil;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -46,7 +46,32 @@ public class VenomEnchant extends EnchantmentCyclic {
 
   public VenomEnchant(Rarity rarityIn, EnchantmentCategory typeIn, EquipmentSlot... slots) {
     super(rarityIn, typeIn, slots);
-    MinecraftForge.EVENT_BUS.register(this);
+    if (isEnabled()) MinecraftForge.EVENT_BUS.register(this);
+  }
+
+  @Override
+  public boolean isTradeable() {
+    return isEnabled() && super.isTradeable();
+  }
+
+  @Override
+  public boolean isDiscoverable() {
+    return isEnabled() && super.isDiscoverable();
+  }
+
+  @Override
+  public boolean isAllowedOnBooks() {
+    return isEnabled() && super.isAllowedOnBooks();
+  }
+
+  @Override
+  public boolean canEnchant(ItemStack stack) {
+    return isEnabled() && super.canEnchant(stack);
+  }
+
+  @Override
+  public boolean canApplyAtEnchantingTable(ItemStack stack) {
+    return isEnabled() && super.canApplyAtEnchantingTable(stack);
   }
 
   @Override
@@ -82,7 +107,7 @@ public class VenomEnchant extends EnchantmentCyclic {
     if (level > 0) {
       // we -1  since potion level 1 is Poison II
       //so that means enchantment I giving poison I means this
-      UtilEntity.addOrMergePotionEffect(target, new MobEffectInstance(MobEffects.POISON, TICKSPERLEVEL * level, level - 1));
+      EntityUtil.addOrMergePotionEffect(target, new MobEffectInstance(MobEffects.POISON, TICKSPERLEVEL * level, level - 1));
     }
   }
 }

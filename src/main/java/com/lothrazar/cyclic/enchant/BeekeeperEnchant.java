@@ -28,12 +28,12 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.animal.Bee;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentCategory;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingSetAttackTargetEvent;
-import net.minecraftforge.eventbus.api.Event.Result;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
@@ -44,7 +44,7 @@ public class BeekeeperEnchant extends EnchantmentCyclic {
 
   public BeekeeperEnchant(Rarity rarityIn, EnchantmentCategory typeIn, EquipmentSlot... slots) {
     super(rarityIn, typeIn, slots);
-    MinecraftForge.EVENT_BUS.register(this);
+    if (isEnabled()) MinecraftForge.EVENT_BUS.register(this);
   }
 
   @Override
@@ -53,29 +53,61 @@ public class BeekeeperEnchant extends EnchantmentCyclic {
   }
 
   @Override
+  public boolean isTradeable() {
+    return isEnabled() && super.isTradeable();
+  }
+
+  @Override
+  public boolean isDiscoverable() {
+    return isEnabled() && super.isDiscoverable();
+  }
+
+  @Override
+  public boolean isAllowedOnBooks() {
+    return isEnabled() && super.isAllowedOnBooks();
+  }
+
+  @Override
+  public boolean canEnchant(ItemStack stack) {
+    return isEnabled() && super.canEnchant(stack);
+  }
+
+  @Override
+  public boolean canApplyAtEnchantingTable(ItemStack stack) {
+    return isEnabled() && super.canApplyAtEnchantingTable(stack);
+  }
+
+  @Override
   public int getMaxLevel() {
     return 2;
   }
 
+  /**
+   * was @net.minecraftforge.event.entity.LivingSetAttackTargetEvent
+   */
   @SubscribeEvent
-  public void onLivingSetAttackTargetEvent(LivingSetAttackTargetEvent event) {
+  public void onLivingChangeTargetEvent(LivingChangeTargetEvent event) {
     if (!isEnabled()) {
       return;
     }
-    if (event.getTarget() instanceof Player && event.getEntityLiving().getType() == EntityType.BEE) {
-      int level = this.getCurrentArmorLevel(event.getTarget());
+    if (event.getOriginalTarget() instanceof Player && event.getEntityLiving().getType() == EntityType.BEE && event.getEntityLiving() instanceof Bee bee) {
+      int level = this.getCurrentArmorLevel(event.getOriginalTarget());
       if (level > 0) {
-        Bee bee = (Bee) event.getEntityLiving();
+        event.setCanceled(true);
+        //        event.setNewTarget(null);
         bee.setAggressive(false);
         bee.setRemainingPersistentAngerTime(0);
         bee.setPersistentAngerTarget(null);
-        event.setResult(Result.DENY);
+        //        event.setResult(Result.DENY);
       }
     }
   }
 
   @SubscribeEvent(priority = EventPriority.LOWEST)
   public void onLivingDamageEvent(LivingDamageEvent event) {
+    if (!isEnabled()) {
+      return;
+    }
     int level = this.getCurrentArmorLevel(event.getEntityLiving());
     if (level >= 1 && event.getSource() != null
         && event.getSource().getDirectEntity() != null) {

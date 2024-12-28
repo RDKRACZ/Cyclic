@@ -3,9 +3,9 @@ package com.lothrazar.cyclic.block.generatoritem;
 import java.util.List;
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
 import com.lothrazar.cyclic.block.battery.TileBattery;
-import com.lothrazar.cyclic.capabilities.CustomEnergyStorage;
 import com.lothrazar.cyclic.capabilities.ItemStackHandlerWrapper;
-import com.lothrazar.cyclic.recipe.CyclicRecipeType;
+import com.lothrazar.cyclic.capabilities.block.CustomEnergyStorage;
+import com.lothrazar.cyclic.registry.CyclicRecipeType;
 import com.lothrazar.cyclic.registry.TileRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -50,7 +50,7 @@ public class TileGeneratorDrops extends TileBlockEntityCyclic implements MenuPro
   private int burnTimeMax = 0; //only non zero if processing
   private int burnTime = 0; //how much of current fuel is left
   private int burnPerTick;
-  private RecipeGeneratorItem<?> currentRecipe;
+  private RecipeGeneratorItem currentRecipe;
 
   public TileGeneratorDrops(BlockPos pos, BlockState state) {
     super(TileRegistry.GENERATOR_ITEM.get(), pos, state);
@@ -84,21 +84,23 @@ public class TileGeneratorDrops extends TileBlockEntityCyclic implements MenuPro
       currentRecipe = null;
       this.burnTimeMax = 0;
       this.burnTime = 0;
-    }
-    //if we are not burning, find a new recipe
-    if (this.burnTimeMax == 0) {
+      //try to find a recipe now that its empty 
       this.findMatchingRecipe();
     }
-    if (burnPerTick == 0 || this.burnTime == 0 ) {
+    tryConsumeFuel();
+  }
+
+  private void tryConsumeFuel() {
+    if (burnPerTick == 0 || this.burnTime == 0) {
       return;
     }
     //we are burning a valid recipe now
     setLitProperty(true);
     int onSim = energy.receiveEnergy(this.burnPerTick, true);
     if (onSim > 0) {
-      this.burnTime--;
       //gen up. we burned away a tick of this fuel
       energy.receiveEnergy(this.burnPerTick, false);
+      this.burnTime--;
     }
   }
 
@@ -107,16 +109,17 @@ public class TileGeneratorDrops extends TileBlockEntityCyclic implements MenuPro
       return;
     }
     currentRecipe = null;
-    List<RecipeGeneratorItem<TileBlockEntityCyclic>> recipes = level.getRecipeManager().getAllRecipesFor(CyclicRecipeType.GENERATOR_ITEM);
-    for (RecipeGeneratorItem<?> rec : recipes) {
+    List<RecipeGeneratorItem> recipes = level.getRecipeManager().getAllRecipesFor(CyclicRecipeType.GENERATOR_ITEM.get());
+    for (RecipeGeneratorItem rec : recipes) {
       if (rec.matches(this, level)) {
         this.burnTimeMax = rec.getTicks();
         this.burnTime = this.burnTimeMax;
         this.burnPerTick = rec.getRfPertick();
         this.currentRecipe = rec;
         final int slot = 0;
-        final int qty = 1; // TODO from currentRecipe ?
+        final int qty = 1;
         this.inputSlots.extractItem(slot, qty, false);
+        updateComparatorOutputLevel();
         return;
       }
     }

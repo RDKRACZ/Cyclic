@@ -1,7 +1,7 @@
 package com.lothrazar.cyclic.block.wireless.item;
 
 import com.lothrazar.cyclic.block.BlockCyclic;
-import com.lothrazar.cyclic.registry.ContainerScreenRegistry;
+import com.lothrazar.cyclic.registry.MenuTypeRegistry;
 import com.lothrazar.cyclic.registry.TileRegistry;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -49,7 +49,7 @@ public class BlockWirelessItem extends BlockCyclic {
 
   @Override
   public void registerClient() {
-    MenuScreens.register(ContainerScreenRegistry.WIRELESS_ITEM, ScreenWirelessItem::new);
+    MenuScreens.register(MenuTypeRegistry.WIRELESS_ITEM.get(), ScreenWirelessItem::new);
     ItemBlockRenderTypes.setRenderLayer(this, RenderType.cutoutMipped());
     //    ClientRegistry.bindTileEntityRenderer(TileRegistry.wireless_transmitter, RenderTransmit::new);
   }
@@ -64,28 +64,17 @@ public class BlockWirelessItem extends BlockCyclic {
     return createTickerHelper(type, TileRegistry.WIRELESS_ITEM.get(), world.isClientSide ? TileWirelessItem::clientTick : TileWirelessItem::serverTick);
   }
 
-  @Override
+  @Override // was onReplaced
   public void onRemove(BlockState state, Level worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
     if (state.getBlock() != newState.getBlock()) {
       TileWirelessItem tileentity = (TileWirelessItem) worldIn.getBlockEntity(pos);
       if (tileentity != null) {
         for (int i = 0; i < tileentity.gpsSlots.getSlots(); ++i) {
+          // was  InventoryHelper.spawnItemStack
           Containers.dropItemStack(worldIn, pos.getX(), pos.getY(), pos.getZ(), tileentity.gpsSlots.getStackInSlot(i));
         }
       }
       super.onRemove(state, worldIn, pos, newState, isMoving);
     }
   }
-  //  @Override
-  //  public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-  //    if (state.getBlock() != newState.getBlock()) {
-  //      TileWirelessItem tileentity = (TileWirelessItem) worldIn.getTileEntity(pos);
-  //      if (tileentity != null) {
-  //        for (int i = 0; i < tileentity.gpsSlots.getSlots(); ++i) {
-  //          InventoryHelper.spawnItemStack(worldIn, pos.getX(), pos.getY(), pos.getZ(), tileentity.gpsSlots.getStackInSlot(i));
-  //        }
-  //      }
-  //      super.onReplaced(state, worldIn, pos, newState, isMoving);
-  //    }
-  //  }
 }

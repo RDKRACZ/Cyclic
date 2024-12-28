@@ -24,6 +24,34 @@ public class XpEnchant extends EnchantmentCyclic {
   }
 
   @Override
+  public boolean isTradeable() {
+    return isEnabled() && super.isTradeable();
+  }
+
+  @Override
+  public boolean isDiscoverable() {
+    return isEnabled() && super.isDiscoverable();
+  }
+
+  @Override
+  public boolean isAllowedOnBooks() {
+    return isEnabled() && super.isAllowedOnBooks();
+  }
+
+  @Override
+  public boolean canEnchant(ItemStack stack) {
+    if (isEnabled() && stack.getItem() instanceof SwordItem) {
+      return true; //override even though digger type 
+    }
+    return isEnabled() && super.canEnchant(stack);
+  }
+
+  @Override
+  public boolean canApplyAtEnchantingTable(ItemStack stack) {
+    return isEnabled() && super.canApplyAtEnchantingTable(stack);
+  }
+
+  @Override
   public boolean isEnabled() {
     return CFG.get();
   }
@@ -57,14 +85,6 @@ public class XpEnchant extends EnchantmentCyclic {
 
   private int getRandomExpAmount(int level, Level world) {
     return world.random.nextInt(getMaxLevel()) * (level + 1);
-  }
-
-  @Override
-  public boolean canEnchant(ItemStack stack) {
-    if (stack.getItem() instanceof SwordItem) {
-      return true; //override even though digger type 
-    }
-    return super.canEnchant(stack);
   }
 
   @Override

@@ -6,7 +6,7 @@ import com.lothrazar.cyclic.data.Const;
 import com.lothrazar.cyclic.net.PacketTileInventoryToClient;
 import com.lothrazar.cyclic.net.PacketTileInventoryToClient.SyncPacketType;
 import com.lothrazar.cyclic.registry.PacketRegistry;
-import com.lothrazar.cyclic.util.UtilEnchant;
+import com.lothrazar.cyclic.util.EnchantUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.world.item.EnchantedBookItem;
@@ -65,7 +65,7 @@ public class EnderShelfItemHandler extends ItemStackHandler {
 
   @Override
   public int getStackLimit(int slot, ItemStack stack) {
-    return BOOKS_PER_ROW.get(); // Math.min(getSlotLimit(slot), stack.getMaxStackSize());
+    return BOOKS_PER_ROW.get();
   }
 
   @Override
@@ -76,10 +76,6 @@ public class EnderShelfItemHandler extends ItemStackHandler {
     boolean oldEmpty = stacks.get(slot).isEmpty();
     ItemStack extracted = super.extractItem(slot, amount, simulate);
     boolean newEmpty = stacks.get(slot).isEmpty();
-    //    if (extracted.getCount() < amount) {
-    //      int rem = amount - extracted.getCount();
-    //      ModCyclic.LOGGER.info("EXTRACT: still some rem" + rem);
-    //    }
     if (oldEmpty != newEmpty) {
       this.refreshId(slot);
     }
@@ -100,9 +96,6 @@ public class EnderShelfItemHandler extends ItemStackHandler {
     boolean oldEmpty = stacks.get(slot).isEmpty();
     ItemStack remaining = super.insertItem(slot, stack, simulate);
     boolean newEmpty = stacks.get(slot).isEmpty();
-    //    if (!remaining.isEmpty()) {
-    //      ModCyclic.LOGGER.info("still some left on insert" + remaining);
-    //    }
     if (oldEmpty != newEmpty) {
       this.refreshId(slot);
     }
@@ -151,16 +144,6 @@ public class EnderShelfItemHandler extends ItemStackHandler {
       return match;
     }
     //else no cache, old way
-    return UtilEnchant.doBookEnchantmentsMatch(stackIn, stackHere);
-  }
-
-  public boolean isEmptyShelves() {
-    int empty = 0;
-    for (int i = 0; i < ROWS; i++) {
-      if (enchantmentIdCache[i] == null || enchantmentIdCache[i].isEmpty()) {
-        empty++;
-      }
-    }
-    return empty == ROWS;
+    return EnchantUtil.doBookEnchantmentsMatch(stackIn, stackHere);
   }
 }

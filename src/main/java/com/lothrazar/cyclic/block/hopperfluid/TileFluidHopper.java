@@ -1,9 +1,9 @@
 package com.lothrazar.cyclic.block.hopperfluid;
 
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
-import com.lothrazar.cyclic.capabilities.FluidTankBase;
+import com.lothrazar.cyclic.capabilities.block.FluidTankBase;
 import com.lothrazar.cyclic.registry.TileRegistry;
-import com.lothrazar.cyclic.util.UtilFluid;
+import com.lothrazar.cyclic.util.FluidHelpers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -72,7 +72,12 @@ public class TileFluidHopper extends TileBlockEntityCyclic {
     //then pull from hopper facey side
     Direction exportToSide = this.getBlockState().getValue(BlockFluidHopper.FACING);
     if (exportToSide != null && exportToSide != Direction.UP) {
+      //if the target is a tank
       moveFluids(exportToSide, worldPosition.relative(exportToSide), FLOW, tank);
+      //if the target is a cauldron
+      FluidHelpers.insertSourceCauldron(level, worldPosition.relative(exportToSide), tank);
+      this.updateComparatorOutputLevel();
+      this.updateComparatorOutputLevelAt(worldPosition.relative(exportToSide));
     }
   }
 
@@ -81,14 +86,17 @@ public class TileFluidHopper extends TileBlockEntityCyclic {
       return;
     }
     BlockPos target = this.worldPosition.relative(Direction.UP);
-    IFluidHandler tankAbove = UtilFluid.getTank(level, target, Direction.DOWN);
-    boolean success = UtilFluid.tryFillPositionFromTank(level, worldPosition, Direction.UP, tankAbove, FLOW);
+    IFluidHandler tankAbove = FluidHelpers.getTank(level, target, Direction.DOWN);
+    boolean success = FluidHelpers.tryFillPositionFromTank(level, worldPosition, Direction.UP, tankAbove, FLOW);
     if (success) {
+      this.updateComparatorOutputLevelAt(target);
+      this.updateComparatorOutputLevel();
       return;
     }
     //try from the world
     if (tank.getSpace() >= FluidAttributes.BUCKET_VOLUME) {
-      UtilFluid.extractSourceWaterloggedCauldron(level, target, tank);
+      FluidHelpers.extractSourceWaterloggedCauldron(level, target, tank);
+      this.updateComparatorOutputLevel();
     }
   }
 

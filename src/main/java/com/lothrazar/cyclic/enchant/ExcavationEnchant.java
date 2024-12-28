@@ -28,8 +28,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import com.lothrazar.cyclic.ModCyclic;
+import com.lothrazar.cyclic.data.DataTags;
 import com.lothrazar.cyclic.registry.EnchantRegistry;
-import com.lothrazar.cyclic.util.UtilItemStack;
+import com.lothrazar.cyclic.util.ItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -46,6 +48,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.event.ForgeEventFactory;
@@ -57,15 +60,36 @@ public class ExcavationEnchant extends EnchantmentCyclic {
 
   public static final String ID = "excavate";
   public static BooleanValue CFG;
+  public static boolean effectiveToolRequired = true; // non-config lets hardcode this actually
 
   public ExcavationEnchant(Rarity rarityIn, EnchantmentCategory typeIn, EquipmentSlot... slots) {
     super(rarityIn, typeIn, slots);
-    MinecraftForge.EVENT_BUS.register(this);
+    if (isEnabled()) MinecraftForge.EVENT_BUS.register(this);
   }
 
   @Override
   public boolean isEnabled() {
     return CFG.get();
+  }
+
+  @Override
+  public boolean isTradeable() {
+    return isEnabled() && super.isTradeable();
+  }
+
+  @Override
+  public boolean isDiscoverable() {
+    return isEnabled() && super.isDiscoverable();
+  }
+
+  @Override
+  public boolean isAllowedOnBooks() {
+    return isEnabled() && super.isAllowedOnBooks();
+  }
+
+  @Override
+  public boolean canApplyAtEnchantingTable(ItemStack stack) {
+    return isEnabled() && super.canApplyAtEnchantingTable(stack);
   }
 
   @Override
@@ -75,7 +99,7 @@ public class ExcavationEnchant extends EnchantmentCyclic {
 
   @Override
   public boolean canEnchant(ItemStack stack) {
-    return super.canEnchant(stack) || stack.is(Tags.Items.SHEARS);
+    return isEnabled() && (super.canEnchant(stack) || stack.is(Tags.Items.SHEARS));
   }
 
   @Override
@@ -106,12 +130,19 @@ public class ExcavationEnchant extends EnchantmentCyclic {
     if (level <= 0) {
       return;
     }
-    //if (ForgeHooks.canHarvestBlock(eventState, player, world, pos)) {
+    if (effectiveToolRequired && !ForgeHooks.isCorrectToolForDrops(eventState, player)) {
+      ModCyclic.LOGGER.info("excavate trigger cancelled; tool not effective");
+      return;
+    }
+    if (eventState.is(DataTags.EXCAVATE_IGNORED)) {
+      ModCyclic.LOGGER.info("excavate trigger cancelled; see blocktag " + DataTags.EXCAVATE_IGNORED.toString());
+      return;
+    }
     if (ForgeEventFactory.doPlayerHarvestCheck(player, eventState, true)) {
       int harvested = this.harvestSurrounding((Level) world, player, pos, block, 1, level, player.swingingArm);
       if (harvested > 0) {
         //damage but also respect the unbreaking chant  
-        UtilItemStack.damageItem(player, stackHarvestingWith);
+        ItemStackUtil.damageItem(player, stackHarvestingWith);
       }
     }
   }

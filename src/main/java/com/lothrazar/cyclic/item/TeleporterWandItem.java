@@ -1,10 +1,10 @@
 package com.lothrazar.cyclic.item;
 
 import com.lothrazar.cyclic.registry.SoundRegistry;
-import com.lothrazar.cyclic.util.UtilEntity;
-import com.lothrazar.cyclic.util.UtilItemStack;
-import com.lothrazar.cyclic.util.UtilParticle;
-import com.lothrazar.cyclic.util.UtilSound;
+import com.lothrazar.cyclic.util.EntityUtil;
+import com.lothrazar.cyclic.util.ItemStackUtil;
+import com.lothrazar.cyclic.util.ParticleUtil;
+import com.lothrazar.cyclic.util.SoundUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -14,7 +14,6 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.UseAnim;
@@ -53,19 +52,16 @@ public class TeleporterWandItem extends ItemBaseCyclic {
   @Override
   public void inventoryTick(ItemStack stack, Level worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
     if (entityIn instanceof Player && stack.isDamaged() && stack.getDamageValue() >= TICK_REPAIR) {
-      tryRepairWith(stack, (Player) entityIn, Items.ENDER_PEARL);
+      this.tryRepairWith(stack, (Player) entityIn, Items.ENDER_PEARL);
     }
   }
 
+  /**
+   * pearls repair 4 durability per item, unlike default 1 per item like Torches
+   */
   @Override
-  public void tryRepairWith(ItemStack stackToRepair, Player player, Item target) {
-    if (stackToRepair.isDamaged()) {
-      ItemStack pearls = this.findAmmo(player, target);
-      if (!pearls.isEmpty()) {
-        pearls.shrink(1);
-        UtilItemStack.repairItem(stackToRepair, 4);
-      }
-    }
+  public int getRepairPerItem() {
+    return 4;
   }
 
   @Override
@@ -82,11 +78,11 @@ public class TeleporterWandItem extends ItemBaseCyclic {
         Direction face = blockRayTraceResult.getDirection();
         BlockPos newPos = blockRayTraceResult.getBlockPos().relative(face);
         BlockPos oldPos = player.blockPosition();
-        if (UtilEntity.enderTeleportEvent(player, world, newPos)) { // && player.getPosition() != currentPlayerPos    
-          UtilItemStack.damageItem(player, stack);
+        if (EntityUtil.enderTeleportEvent(player, world, newPos)) { // && player.getPosition() != currentPlayerPos    
+          ItemStackUtil.damageItem(player, stack);
           if (world.isClientSide) {
-            UtilParticle.spawnParticleBeam(world, ParticleTypes.PORTAL, oldPos, newPos, RANGE.get());
-            UtilSound.playSound(player, SoundRegistry.WARP_ECHO);
+            ParticleUtil.spawnParticleBeam(world, ParticleTypes.PORTAL, oldPos, newPos, RANGE.get());
+            SoundUtil.playSound(player, SoundRegistry.WARP_ECHO.get());
           }
         }
       }

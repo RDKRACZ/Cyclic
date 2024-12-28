@@ -25,7 +25,7 @@ package com.lothrazar.cyclic.enchant;
 
 import java.util.Arrays;
 import java.util.List;
-import com.lothrazar.cyclic.util.UtilParticle;
+import com.lothrazar.cyclic.util.ParticleUtil;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -52,7 +52,35 @@ public class TravellerEnchant extends EnchantmentCyclic {
 
   public TravellerEnchant(Rarity rarityIn, EnchantmentCategory typeIn, EquipmentSlot... slots) {
     super(rarityIn, typeIn, slots);
-    MinecraftForge.EVENT_BUS.register(this);
+    if (isEnabled()) MinecraftForge.EVENT_BUS.register(this);
+  }
+
+  @Override
+  public boolean isTradeable() {
+    return isEnabled() && super.isTradeable();
+  }
+
+  @Override
+  public boolean isDiscoverable() {
+    return isEnabled() && super.isDiscoverable();
+  }
+
+  @Override
+  public boolean isAllowedOnBooks() {
+    return isEnabled() && super.isAllowedOnBooks();
+  }
+
+  @Override
+  public boolean canApplyAtEnchantingTable(ItemStack stack) {
+    return isEnabled() && super.canApplyAtEnchantingTable(stack);
+  }
+
+  @Override
+  public boolean canEnchant(ItemStack stack) {
+    boolean yes = isEnabled()
+        && (stack.getItem() instanceof ArmorItem)
+        && ((ArmorItem) stack.getItem()).getSlot() == EquipmentSlot.LEGS;
+    return yes;
   }
 
   @Override
@@ -63,18 +91,6 @@ public class TravellerEnchant extends EnchantmentCyclic {
   @Override
   public int getMaxLevel() {
     return 1;
-  }
-
-  @Override
-  public boolean canEnchant(ItemStack stack) {
-    boolean yes = (stack.getItem() instanceof ArmorItem)
-        && ((ArmorItem) stack.getItem()).getSlot() == EquipmentSlot.LEGS;
-    return yes;
-  }
-
-  @Override
-  public boolean canApplyAtEnchantingTable(ItemStack stack) {
-    return this.canEnchant(stack);
   }
 
   @SubscribeEvent
@@ -112,7 +128,7 @@ public class TravellerEnchant extends EnchantmentCyclic {
         if (event.getAmount() > event.getEntityLiving().getHealth() - 0.5F) {
           //either you crashed flying straight into the ground, or just fell while wearing elytra (you still die to void tho)
           event.setAmount(event.getEntityLiving().getHealth() - 1F);
-          UtilParticle.spawnParticle(event.getEntity().level, ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, event.getEntity().blockPosition(), 4);
+          ParticleUtil.spawnParticle(event.getEntity().level, ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, event.getEntity().blockPosition(), 4);
         }
       }
     }

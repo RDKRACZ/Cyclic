@@ -3,7 +3,7 @@ package com.lothrazar.cyclic.block;
 import java.util.List;
 import com.lothrazar.cyclic.config.ClientConfigCyclic;
 import com.lothrazar.cyclic.registry.BlockRegistry;
-import com.lothrazar.cyclic.util.UtilSound;
+import com.lothrazar.cyclic.util.SoundUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -108,12 +108,11 @@ public class BlockCyclic extends BaseEntityBlock {
           if (handler != null) {
             if (FluidUtil.interactWithFluidHandler(player, hand, handler)) {
               if (player instanceof ServerPlayer) {
-                UtilSound.playSoundFromServer((ServerPlayer) player, SoundEvents.BUCKET_FILL, 1F, 1F);
+                SoundUtil.playSoundFromServer((ServerPlayer) player, SoundEvents.BUCKET_FILL, 1F, 1F);
               }
               //success so display new amount
               if (handler.getFluidInTank(0) != null) {
                 displayClientFluidMessage(player, handler);
-                return InteractionResult.SUCCESS;
               }
             }
             else {
@@ -121,6 +120,9 @@ public class BlockCyclic extends BaseEntityBlock {
             }
           }
         }
+      }
+      if (FluidUtil.getFluidHandler(player.getItemInHand(hand)).isPresent()) { // reverted to how 1.16.5 does it fix sapphys bug
+        return InteractionResult.SUCCESS;
       }
     }
     if (this.hasGui) {
@@ -203,5 +205,17 @@ public class BlockCyclic extends BaseEntityBlock {
       return true;
     }
     return false;
+  }
+
+  //for comparators that dont use item inventories
+  protected int calcRedstoneFromFluid(BlockEntity tileEntity) {
+    IFluidHandler fluid = tileEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY).orElse(null);
+    if (fluid.getFluidInTank(0).isEmpty()) {
+      return 0;
+    }
+    float cap = fluid.getTankCapacity(0);
+    float amt = fluid.getFluidInTank(0).getAmount();
+    float f = amt / cap;
+    return (int) Math.floor((f * 14.0F)) + 1;
   }
 }

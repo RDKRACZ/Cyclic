@@ -2,7 +2,7 @@ package com.lothrazar.cyclic.block.dice;
 
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
 import com.lothrazar.cyclic.registry.TileRegistry;
-import com.lothrazar.cyclic.util.UtilWorld;
+import com.lothrazar.cyclic.util.LevelWorldUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -54,40 +54,20 @@ public class TileDice extends TileBlockEntityCyclic {
   public void tick() {
     if (this.timer == 0) {
       this.spinningIfZero = 1;
-      level.updateNeighbourForOutputSignal(worldPosition, this.getBlockState().getBlock());
+      updateComparatorOutputLevel();
     }
     else {
       this.timer--;
       //toggle block state
       if (this.timer % TICKS_PER_CHANGE == 0) {
         this.spinningIfZero = 0;
-        Direction fac = UtilWorld.getRandomDirection(level.random);
+        Direction fac = LevelWorldUtil.getRandomDirection(level.random);
         BlockState stateold = level.getBlockState(worldPosition);
         BlockState newstate = stateold.setValue(BlockStateProperties.FACING, fac);
         level.setBlockAndUpdate(worldPosition, newstate);
         //        world.notifyBlockUpdate(pos, stateold, newstate, 3);
       }
     }
-    //
-    //
-    //    @Override
-    //    public void update() {
-    //      if (this.timer == 0) {
-    //        this.spinningIfZero = 1;
-    //        world.updateComparatorOutputLevel(pos, this.blockType);
-    //      }
-    //      else {
-    //        this.timer--;
-    //        //toggle block state
-    //        if (this.timer % TICKS_PER_CHANGE == 0) {
-    //          this.spinningIfZero = 0;
-    //          EnumFacing fac = BlockDice.getRandom(world.rand);
-    //          IBlockState stateold = world.getBlockState(pos);
-    //          IBlockState newstate = stateold.withProperty(BlockDice.PROPERTYFACING, fac);
-    //          world.setBlockState(pos, newstate);
-    //          //        world.notifyBlockUpdate(pos, stateold, newstate, 3);
-    //        }
-    //      }
   }
 
   @Override

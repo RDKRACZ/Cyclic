@@ -3,14 +3,14 @@ package com.lothrazar.cyclic.block.battery;
 import java.util.ArrayList;
 import java.util.List;
 import com.lothrazar.cyclic.block.BlockCyclic;
-import com.lothrazar.cyclic.capabilities.CustomEnergyStorage;
-import com.lothrazar.cyclic.registry.ContainerScreenRegistry;
+import com.lothrazar.cyclic.capabilities.block.CustomEnergyStorage;
+import com.lothrazar.cyclic.registry.MenuTypeRegistry;
 import com.lothrazar.cyclic.registry.TileRegistry;
+import com.lothrazar.cyclic.util.ItemStackUtil;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -36,7 +36,7 @@ public class BlockBattery extends BlockCyclic {
 
   @Override
   public void registerClient() {
-    MenuScreens.register(ContainerScreenRegistry.BATTERY, ScreenBattery::new);
+    MenuScreens.register(MenuTypeRegistry.BATTERY.get(), ScreenBattery::new);
   }
 
   @Override
@@ -67,10 +67,7 @@ public class BlockBattery extends BlockCyclic {
         newStackBattery.getOrCreateTag().putInt(ItemBlockBattery.ENERGYTTMAX, battery.energy.getMaxEnergyStored());
       }
     }
-    //even if energy fails 
-    if (world.isClientSide == false) {
-      world.addFreshEntity(new ItemEntity(world, pos.getX() + 0.5F, pos.getY() + 0.5F, pos.getZ() + 0.5F, newStackBattery));
-    }
+    ItemStackUtil.dropItemStackMotionless(world, pos, newStackBattery);
   }
 
   @Override

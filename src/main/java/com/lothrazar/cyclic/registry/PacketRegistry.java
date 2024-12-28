@@ -5,6 +5,7 @@ import com.lothrazar.cyclic.item.builder.PacketSwapBlock;
 import com.lothrazar.cyclic.item.random.PacketRandomize;
 import com.lothrazar.cyclic.item.scythe.PacketScythe;
 import com.lothrazar.cyclic.item.transporter.PacketChestSack;
+import com.lothrazar.cyclic.net.BlockFacadeMessage;
 import com.lothrazar.cyclic.net.PacketBaseCyclic;
 import com.lothrazar.cyclic.net.PacketCraftAction;
 import com.lothrazar.cyclic.net.PacketEnergySync;
@@ -17,6 +18,7 @@ import com.lothrazar.cyclic.net.PacketItemScroll;
 import com.lothrazar.cyclic.net.PacketItemToggle;
 import com.lothrazar.cyclic.net.PacketKeyBind;
 import com.lothrazar.cyclic.net.PacketPlayerFalldamage;
+import com.lothrazar.cyclic.net.PacketPlayerSyncToClient;
 import com.lothrazar.cyclic.net.PacketRecordSound;
 import com.lothrazar.cyclic.net.PacketRotateBlock;
 import com.lothrazar.cyclic.net.PacketStorageBagScreen;
@@ -65,6 +67,8 @@ public class PacketRegistry {
     INSTANCE.registerMessage(id++, PacketRecordSound.class, PacketRecordSound::encode, PacketRecordSound::decode, PacketRecordSound::handle);
     INSTANCE.registerMessage(id++, PacketHarvesting.class, PacketHarvesting::encode, PacketHarvesting::decode, PacketHarvesting::handle);
     INSTANCE.registerMessage(id++, PacketEntityLaser.class, PacketEntityLaser::encode, PacketEntityLaser::decode, PacketEntityLaser::handle);
+    INSTANCE.registerMessage(id++, PacketPlayerSyncToClient.class, PacketPlayerSyncToClient::encode, PacketPlayerSyncToClient::decode, PacketPlayerSyncToClient::handle);
+    INSTANCE.registerMessage(id++, BlockFacadeMessage.class, BlockFacadeMessage::encode, BlockFacadeMessage::decode, BlockFacadeMessage::handle);
   }
 
   public static void sendToAllClients(Level world, PacketBaseCyclic packet) {

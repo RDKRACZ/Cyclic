@@ -1,13 +1,13 @@
 package com.lothrazar.cyclic.potion.effect;
 
-import com.lothrazar.cyclic.potion.TickableEffect;
+import com.lothrazar.cyclic.potion.CyclicMobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 
-public class WaterwalkEffect extends TickableEffect {
+public class WaterwalkEffect extends CyclicMobEffect {
 
   public WaterwalkEffect(MobEffectCategory typeIn, int liquidColorIn) {
     super(typeIn, liquidColorIn);
@@ -15,8 +15,8 @@ public class WaterwalkEffect extends TickableEffect {
 
   @Override
   public void tick(LivingUpdateEvent event) {
-    // delete me i guess 
     LivingEntity entity = event.getEntityLiving();
+    //    living.getEffect(this).getAmplifier()
     if (entity.isInWater() || entity.getLevel().getBlockState(entity.blockPosition()).is(Blocks.WATER)) {
       if (entity instanceof Player p) {
         if (p.isCrouching()) {

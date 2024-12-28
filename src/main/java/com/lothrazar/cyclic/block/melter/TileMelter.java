@@ -3,9 +3,9 @@ package com.lothrazar.cyclic.block.melter;
 import java.util.List;
 import java.util.function.Predicate;
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
-import com.lothrazar.cyclic.capabilities.CustomEnergyStorage;
-import com.lothrazar.cyclic.capabilities.FluidTankBase;
-import com.lothrazar.cyclic.recipe.CyclicRecipeType;
+import com.lothrazar.cyclic.capabilities.block.CustomEnergyStorage;
+import com.lothrazar.cyclic.capabilities.block.FluidTankBase;
+import com.lothrazar.cyclic.registry.CyclicRecipeType;
 import com.lothrazar.cyclic.registry.TileRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -27,12 +27,12 @@ import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 
-@SuppressWarnings("rawtypes")
 public class TileMelter extends TileBlockEntityCyclic implements MenuProvider {
 
   static enum Fields {
@@ -43,11 +43,11 @@ public class TileMelter extends TileBlockEntityCyclic implements MenuProvider {
   public static final int CAPACITY = 64 * FluidAttributes.BUCKET_VOLUME;
   public static final int TRANSFER_FLUID_PER_TICK = FluidAttributes.BUCKET_VOLUME / 20;
   public FluidTankBase tank = new FluidTankBase(this, CAPACITY, isFluidValid());
-  LazyOptional<FluidTankBase> fluidCap = LazyOptional.of(() -> tank);
   CustomEnergyStorage energy = new CustomEnergyStorage(MAX, MAX);
   ItemStackHandler inventory = new ItemStackHandler(2);
   private LazyOptional<IEnergyStorage> energyCap = LazyOptional.of(() -> energy);
   private LazyOptional<IItemHandler> inventoryCap = LazyOptional.of(() -> inventory);
+  private final LazyOptional<IFluidHandler> fluidCap = LazyOptional.of(() -> tank);
   private RecipeMelter currentRecipe;
   private int burnTimeMax = 0; //only non zero if processing
 
@@ -74,9 +74,6 @@ public class TileMelter extends TileBlockEntityCyclic implements MenuProvider {
       timer = 0;
     }
     final int cost = this.currentRecipe.getEnergyCost();
-    //=======
-    //    final int cost = POWERCONF.get();
-    //>>>>>>> 54f4445a2d7902cf4ef454efe328c9667ca5b652
     if (energy.getEnergyStored() < cost && cost > 0) {
       this.timer = 0;
       return;
@@ -214,7 +211,7 @@ public class TileMelter extends TileBlockEntityCyclic implements MenuProvider {
     currentRecipe = null;
     this.burnTimeMax = 0;
     this.timer = 0;
-    List<RecipeMelter<TileBlockEntityCyclic>> recipes = level.getRecipeManager().getAllRecipesFor(CyclicRecipeType.MELTER);
+    List<RecipeMelter> recipes = level.getRecipeManager().getAllRecipesFor(CyclicRecipeType.MELTER.get());
     for (RecipeMelter rec : recipes) {
       if (rec.matches(this, level)) {
         if (this.tank.getFluid() != null && !this.tank.getFluid().isEmpty()) {
@@ -239,6 +236,7 @@ public class TileMelter extends TileBlockEntityCyclic implements MenuProvider {
       inventory.getStackInSlot(0).shrink(1);
       inventory.getStackInSlot(1).shrink(1);
       tank.fill(this.currentRecipe.getRecipeFluid(), FluidAction.EXECUTE);
+      updateComparatorOutputLevel();
       return true;
     }
     return false;

@@ -24,7 +24,7 @@
 package com.lothrazar.cyclic.enchant;
 
 import com.lothrazar.cyclic.ModCyclic;
-import com.lothrazar.cyclic.util.UtilStepHeight;
+import com.lothrazar.cyclic.util.AttributesUtil;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
@@ -44,7 +44,27 @@ public class StepEnchant extends EnchantmentCyclic {
 
   public StepEnchant(Rarity rarityIn, EnchantmentCategory typeIn, EquipmentSlot... slots) {
     super(rarityIn, typeIn, slots);
-    MinecraftForge.EVENT_BUS.register(this);
+    if (isEnabled()) MinecraftForge.EVENT_BUS.register(this);
+  }
+
+  @Override
+  public boolean isTradeable() {
+    return isEnabled() && super.isTradeable();
+  }
+
+  @Override
+  public boolean isDiscoverable() {
+    return isEnabled() && super.isDiscoverable();
+  }
+
+  @Override
+  public boolean isAllowedOnBooks() {
+    return isEnabled() && super.isAllowedOnBooks();
+  }
+
+  @Override
+  public boolean canApplyAtEnchantingTable(ItemStack stack) {
+    return isEnabled() && super.canApplyAtEnchantingTable(stack);
   }
 
   @Override
@@ -60,14 +80,10 @@ public class StepEnchant extends EnchantmentCyclic {
   @Override
   public boolean canEnchant(ItemStack stack) {
     //anything that goes on your feet
-    boolean yes = (stack.getItem() instanceof ArmorItem)
+    boolean yes = isEnabled()
+        && (stack.getItem() instanceof ArmorItem)
         && ((ArmorItem) stack.getItem()).getSlot() == EquipmentSlot.LEGS;
     return yes;
-  }
-
-  @Override
-  public boolean canApplyAtEnchantingTable(ItemStack stack) {
-    return this.canEnchant(stack);
   }
 
   @SubscribeEvent
@@ -99,7 +115,7 @@ public class StepEnchant extends EnchantmentCyclic {
 
   private void turnOn(Player player, ItemStack armor) {
     player.getPersistentData().putBoolean(NBT_ON, true);
-    UtilStepHeight.enableStepHeight(player);
+    AttributesUtil.enableStepHeight(player);
     //    ModCyclic.log("ON " + player.getPersistentData().getBoolean(NBT_ON));
   }
 
@@ -107,7 +123,7 @@ public class StepEnchant extends EnchantmentCyclic {
     //skip if lofty stature has override
     //was it on before, do we need to do an off hit
     if (player.getPersistentData().contains(NBT_ON) && player.getPersistentData().getBoolean(NBT_ON)) {
-      UtilStepHeight.disableStepHeight(player);
+      AttributesUtil.disableStepHeight(player);
       player.getPersistentData().putBoolean(NBT_ON, false);
     }
   }

@@ -2,7 +2,7 @@ package com.lothrazar.cyclic.block.beaconpotion;
 
 import com.lothrazar.cyclic.gui.ContainerBase;
 import com.lothrazar.cyclic.registry.BlockRegistry;
-import com.lothrazar.cyclic.registry.ContainerScreenRegistry;
+import com.lothrazar.cyclic.registry.MenuTypeRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -12,14 +12,13 @@ import net.minecraftforge.items.SlotItemHandler;
 
 public class ContainerPotion extends ContainerBase {
 
-  TilePotion tile;
+  TilePotionBeacon tile;
 
   public ContainerPotion(int windowId, Level world, BlockPos pos, Inventory playerInventory, Player player) {
-    super(ContainerScreenRegistry.BEACON, windowId);
-    tile = (TilePotion) world.getBlockEntity(pos);
+    super(MenuTypeRegistry.BEACON.get(), windowId);
+    tile = (TilePotionBeacon) world.getBlockEntity(pos);
     this.playerEntity = player;
     this.playerInventory = playerInventory;
-    //    tile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(h -> {
     this.endInv = tile.inventory.getSlots();
     addSlot(new SlotItemHandler(tile.inventory, 0, 9, 35) {
 
@@ -37,7 +36,7 @@ public class ContainerPotion extends ContainerBase {
       }
     });
     layoutPlayerInventorySlots(8, 84);
-    this.trackAllIntFields(tile, TilePotion.Fields.values().length);
+    this.trackAllIntFields(tile, TilePotionBeacon.Fields.values().length);
     trackEnergy(tile);
   }
 

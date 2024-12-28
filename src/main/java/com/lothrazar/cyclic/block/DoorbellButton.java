@@ -8,6 +8,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ButtonBlock;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -15,10 +16,9 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 
-public class DoorbellButton extends ButtonBlock {
+public class DoorbellButton extends ButtonBlock implements SimpleWaterloggedBlock {
 
   public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
-  private static final SoundEvent SOUND = SoundRegistry.DOORBELL_MIKEKOENIG;
   public static final int LIGHTLVL = 4;
   public static final int POWERLVL = 1;
 
@@ -65,6 +65,6 @@ public class DoorbellButton extends ButtonBlock {
 
   @Override
   protected SoundEvent getSound(boolean isOn) {
-    return isOn ? SOUND : null;
+    return isOn ? SoundRegistry.DOORBELL_MIKEKOENIG.get() : null;
   }
 }

@@ -1,7 +1,7 @@
 package com.lothrazar.cyclic.item.crafting;
 
 import com.lothrazar.cyclic.item.ItemBaseCyclic;
-import com.lothrazar.cyclic.registry.ContainerScreenRegistry;
+import com.lothrazar.cyclic.registry.MenuTypeRegistry;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,14 +22,15 @@ public class CraftingBagItem extends ItemBaseCyclic {
   @Override
   public InteractionResultHolder<ItemStack> use(Level worldIn, Player playerIn, InteractionHand handIn) {
     if (!worldIn.isClientSide && !playerIn.isCrouching()) {
-      NetworkHooks.openGui((ServerPlayer) playerIn, new CraftingBagContainerProvider(), playerIn.blockPosition());
+      int slot = handIn == InteractionHand.MAIN_HAND ? playerIn.getInventory().selected : 40;
+      NetworkHooks.openGui((ServerPlayer) playerIn, new CraftingBagContainerProvider(slot), buf -> buf.writeInt(slot));
     }
     return super.use(worldIn, playerIn, handIn);
   }
 
   @Override
   public void registerClient() {
-    MenuScreens.register(ContainerScreenRegistry.CRAFTING_BAG, CraftingBagScreen::new);
+    MenuScreens.register(MenuTypeRegistry.CRAFTING_BAG.get(), CraftingBagScreen::new);
   }
 
   @Override

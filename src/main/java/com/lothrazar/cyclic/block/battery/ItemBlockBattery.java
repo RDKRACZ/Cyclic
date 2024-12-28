@@ -1,7 +1,9 @@
 package com.lothrazar.cyclic.block.battery;
 
-import com.lothrazar.cyclic.capabilities.CapabilityProviderEnergyStack;
 import java.util.List;
+import com.lothrazar.cyclic.capabilities.block.CustomEnergyStorage;
+import com.lothrazar.cyclic.capabilities.item.CapabilityProviderEnergyStack;
+import com.lothrazar.cyclic.registry.TextureRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -40,7 +42,7 @@ public class ItemBlockBattery extends BlockItem {
       max = storage.getMaxEnergyStored();
     }
     else if (stack.hasTag() && stack.getTag().contains(ENERGYTT)) {
-      //TODO delete this branch
+      //TODO 1.19 port delete this branch
       current = stack.getTag().getInt(ENERGYTT);
       max = stack.getTag().getInt(ENERGYTTMAX);
     }
@@ -49,7 +51,7 @@ public class ItemBlockBattery extends BlockItem {
 
   @Override
   public int getBarColor(ItemStack stack) {
-    return 0xBA0909; // TODO: cyclic-client.toml ?
+    return TextureRegistry.COLOUR_RF_BAR;
   }
 
   @Override
@@ -63,7 +65,7 @@ public class ItemBlockBattery extends BlockItem {
       tooltip.add(new TranslatableComponent(current + "/" + energyttmax).withStyle(ChatFormatting.RED));
     }
     else if (stack.hasTag() && stack.getTag().contains(ENERGYTT)) {
-      //TODO delete this branch
+      //TODO 1.19 port  delete this branch
       current = stack.getTag().getInt(ENERGYTT);
       energyttmax = stack.getTag().getInt(ENERGYTTMAX);
       tooltip.add(new TranslatableComponent(current + "/" + energyttmax).withStyle(ChatFormatting.BLUE));
@@ -95,8 +97,13 @@ public class ItemBlockBattery extends BlockItem {
   public void readShareTag(ItemStack stack, CompoundTag nbt) {
     if (nbt != null) {
       CompoundTag stackTag = stack.getOrCreateTag();
-      stackTag.putInt(ENERGYTT, nbt.getInt(ENERGYTT));
+      final int serverEnergyValue = nbt.getInt(ENERGYTT);
+      stackTag.putInt(ENERGYTT, serverEnergyValue);
       stackTag.putInt(ENERGYTTMAX, nbt.getInt(ENERGYTTMAX));
+      final IEnergyStorage storage = stack.getCapability(CapabilityEnergy.ENERGY, null).orElse(null);
+      if (storage instanceof CustomEnergyStorage energy) {
+        energy.setEnergy(serverEnergyValue);
+      }
     }
     super.readShareTag(stack, nbt);
   }

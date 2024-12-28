@@ -8,9 +8,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import com.lothrazar.cyclic.item.ItemBaseCyclic;
-import com.lothrazar.cyclic.registry.ContainerScreenRegistry;
+import com.lothrazar.cyclic.registry.MenuTypeRegistry;
 import com.lothrazar.cyclic.registry.SoundRegistry;
-import com.lothrazar.cyclic.util.UtilSound;
+import com.lothrazar.cyclic.util.SoundUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.core.BlockPos;
@@ -52,7 +52,8 @@ public class ItemStorageBag extends ItemBaseCyclic {
   @Override
   public InteractionResultHolder<ItemStack> use(Level worldIn, Player playerIn, InteractionHand handIn) {
     if (!worldIn.isClientSide && !playerIn.isCrouching()) {
-      NetworkHooks.openGui((ServerPlayer) playerIn, new StorageBagContainerProvider(), playerIn.blockPosition());
+      int slot = handIn == InteractionHand.MAIN_HAND ? playerIn.getInventory().selected : 40;
+      NetworkHooks.openGui((ServerPlayer) playerIn, new StorageBagContainerProvider(slot), buf -> buf.writeInt(slot));
     }
     return super.use(worldIn, playerIn, handIn);
   }
@@ -100,7 +101,7 @@ public class ItemStorageBag extends ItemBaseCyclic {
           }
         }
       }
-      UtilSound.playSound(context.getPlayer(), SoundRegistry.BASEY);
+      SoundUtil.playSound(context.getPlayer(), SoundRegistry.BASEY.get());
       return InteractionResult.SUCCESS;
     }
     return InteractionResult.PASS;
@@ -135,7 +136,7 @@ public class ItemStorageBag extends ItemBaseCyclic {
 
   @Override
   public void registerClient() {
-    MenuScreens.register(ContainerScreenRegistry.STORAGE_BAG, ScreenStorageBag::new);
+    MenuScreens.register(MenuTypeRegistry.STORAGE_BAG.get(), ScreenStorageBag::new);
   }
 
   @Override

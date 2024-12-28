@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import com.lothrazar.cyclic.item.ItemBaseCyclic;
 import com.lothrazar.cyclic.item.slingshot.MagicMissileEntity;
-import com.lothrazar.cyclic.util.UtilEntity;
+import com.lothrazar.cyclic.util.EntityUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -36,11 +36,6 @@ public class WandMissileItem extends ItemBaseCyclic {
   }
 
   @Override
-  public int getBarColor(ItemStack stack) {
-    return 0xBA0909; // TODO: cyclic-client.toml ?
-  }
-
-  @Override
   public InteractionResultHolder<ItemStack> use(Level worldIn, Player playerIn, InteractionHand handIn) {
     ItemStack itemstack = playerIn.getItemInHand(handIn);
     this.doAction(itemstack, worldIn, playerIn);
@@ -67,7 +62,7 @@ public class WandMissileItem extends ItemBaseCyclic {
         //we can afford it
         storage.extractEnergy(cost, false);
         MagicMissileEntity projectile = new MagicMissileEntity(player, world);
-        projectile.setTarget(UtilEntity.getClosestEntity(world, player, trimmedTargets));
+        projectile.setTarget(EntityUtil.getClosestEntity(world, player, trimmedTargets));
         shootMe(world, player, projectile, 0, ItemBaseCyclic.VELOCITY_MAX);
       }
     }

@@ -24,8 +24,8 @@
 package com.lothrazar.cyclic.item.elemental;
 
 import com.lothrazar.cyclic.item.ItemBaseCyclic;
-import com.lothrazar.cyclic.util.UtilEntity;
-import com.lothrazar.cyclic.util.UtilShape;
+import com.lothrazar.cyclic.util.EntityUtil;
+import com.lothrazar.cyclic.util.ShapeUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionResult;
@@ -35,11 +35,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 
 public class WaterSpreaderItem extends ItemBaseCyclic {
 
   private static final int COOLDOWN = 28;
-  private static final int RADIUS = 3;
+  public static IntValue RADIUS;
 
   public WaterSpreaderItem(Properties properties) {
     super(properties);
@@ -61,7 +62,7 @@ public class WaterSpreaderItem extends ItemBaseCyclic {
 
   private boolean spreadWaterFromCenter(Level world, Player player, BlockPos posCenter) {
     int count = 0;
-    for (BlockPos pos : UtilShape.squareHorizontalFull(posCenter, RADIUS)) {
+    for (BlockPos pos : ShapeUtil.squareHorizontalFull(posCenter, RADIUS.get())) {
       if (world.isWaterAt(pos) && world.getBlockState(pos).getBlock() == Blocks.WATER) {
         world.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
         count++;
@@ -80,7 +81,7 @@ public class WaterSpreaderItem extends ItemBaseCyclic {
     }
     boolean success = count > 0;
     if (success) { //particles are on each location, sound is just once
-      UtilEntity.setCooldownItem(player, this, COOLDOWN);
+      EntityUtil.setCooldownItem(player, this, COOLDOWN);
       //      UtilSound.playSound(player, SoundEvents.ENTITY_PLAYER_SPLASH);
     }
     return success;

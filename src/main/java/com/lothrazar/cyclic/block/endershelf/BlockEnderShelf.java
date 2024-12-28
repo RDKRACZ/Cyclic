@@ -7,9 +7,9 @@ import com.lothrazar.cyclic.block.BlockCyclic;
 import com.lothrazar.cyclic.block.enderctrl.EnderShelfHelper;
 import com.lothrazar.cyclic.block.enderctrl.TileEnderCtrl;
 import com.lothrazar.cyclic.data.DataTags;
-import com.lothrazar.cyclic.util.UtilBlockstates;
-import com.lothrazar.cyclic.util.UtilEnchant;
-import com.lothrazar.cyclic.util.UtilItemStack;
+import com.lothrazar.cyclic.util.BlockstatesUtil;
+import com.lothrazar.cyclic.util.EnchantUtil;
+import com.lothrazar.cyclic.util.ItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -89,7 +89,7 @@ public class BlockEnderShelf extends BlockCyclic {
       //
       if (heldItem.getItem() == Items.ENCHANTED_BOOK) {
         ItemStack stackInSlot = shelf.inventory.getStackInSlot(slot);
-        if (stackInSlot == ItemStack.EMPTY || UtilEnchant.doBookEnchantmentsMatch(stackInSlot, heldItem)) {
+        if (stackInSlot == ItemStack.EMPTY || EnchantUtil.doBookEnchantmentsMatch(stackInSlot, heldItem)) {
           if (!world.isClientSide) {
             ItemStack remaining = shelf.inventory.insertItem(slot, heldItem, false);
             player.setItemInHand(hand, remaining);
@@ -116,7 +116,6 @@ public class BlockEnderShelf extends BlockCyclic {
   public TileEnderShelf getTileEntity(Level world, BlockPos pos) {
     return (TileEnderShelf) world.getBlockEntity(pos);
   }
-  //
 
   @Override
   public List<ItemStack> getDrops(BlockState state, net.minecraft.world.level.storage.loot.LootContext.Builder builder) {
@@ -128,7 +127,7 @@ public class BlockEnderShelf extends BlockCyclic {
   public void setPlacedBy(Level world, BlockPos pos, BlockState state, LivingEntity entity, ItemStack stack) {
     if (entity != null) {
       //facing state if needed 
-      world.setBlock(pos, state.setValue(BlockStateProperties.HORIZONTAL_FACING, UtilBlockstates.getFacingFromEntityHorizontal(pos, entity)), 2);
+      world.setBlock(pos, state.setValue(BlockStateProperties.HORIZONTAL_FACING, BlockstatesUtil.getFacingFromEntityHorizontal(pos, entity)), 2);
     }
     BlockEntity tileentity = world.getBlockEntity(pos);
     TileEnderShelf shelf = (TileEnderShelf) tileentity;
@@ -152,12 +151,10 @@ public class BlockEnderShelf extends BlockCyclic {
     ItemStack newStack = new ItemStack(this);
     if (tileentity instanceof TileEnderShelf) {
       TileEnderShelf shelf = (TileEnderShelf) tileentity;
-      if (!shelf.inventory.isEmptyShelves()) {
-        //read from tile, write to itemstack  
-        CompoundTag tileData = shelf.inventory.serializeNBT();
-        newStack.setTag(tileData);
-      }
+      //read from tile, write to itemstack  
+      CompoundTag tileData = shelf.inventory.serializeNBT();
+      newStack.setTag(tileData);
     }
-    UtilItemStack.drop(world, pos, newStack);
+    ItemStackUtil.dropItemStackMotionless(world, pos, newStack);
   }
 }

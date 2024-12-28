@@ -4,8 +4,9 @@ import java.util.List;
 import com.lothrazar.cyclic.ModCyclic;
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
 import com.lothrazar.cyclic.data.EntityFilterType;
+import com.lothrazar.cyclic.data.PreviewOutlineType;
 import com.lothrazar.cyclic.registry.TileRegistry;
-import com.lothrazar.cyclic.util.UtilShape;
+import com.lothrazar.cyclic.util.ShapeUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -110,8 +111,12 @@ public class TileDetector extends TileBlockEntityCyclic implements MenuProvider 
     return isPoweredNow;
   }
 
+  public List<BlockPos> getShapeHollow() {
+    return getShape();
+  }
+
   public List<BlockPos> getShape() {
-    return UtilShape.getShape(getRange(), worldPosition.getY());
+    return ShapeUtil.getShape(getRange(), worldPosition.getY());
   }
 
   private int getCountInRange() {
@@ -154,7 +159,7 @@ public class TileDetector extends TileBlockEntityCyclic implements MenuProvider 
   public void setField(int field, int value) {
     switch (Fields.values()[field]) {
       case RENDER:
-        this.render = value % 2;
+        this.render = value % PreviewOutlineType.values().length;
       break;
       case GREATERTHAN:
         if (value >= CompareType.values().length) {

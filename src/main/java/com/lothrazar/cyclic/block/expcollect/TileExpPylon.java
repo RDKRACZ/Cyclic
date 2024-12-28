@@ -3,12 +3,13 @@ package com.lothrazar.cyclic.block.expcollect;
 import java.util.List;
 import java.util.function.Predicate;
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
-import com.lothrazar.cyclic.capabilities.FluidTankBase;
+import com.lothrazar.cyclic.capabilities.block.FluidTankBase;
 import com.lothrazar.cyclic.data.DataTags;
 import com.lothrazar.cyclic.fluid.FluidXpJuiceHolder;
 import com.lothrazar.cyclic.registry.TileRegistry;
-import com.lothrazar.cyclic.util.UtilPlayer;
-import com.lothrazar.cyclic.util.UtilSound;
+import com.lothrazar.cyclic.util.FluidHelpers;
+import com.lothrazar.cyclic.util.PlayerUtil;
+import com.lothrazar.cyclic.util.SoundUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidAttributes;
@@ -41,7 +43,7 @@ public class TileExpPylon extends TileBlockEntityCyclic implements MenuProvider 
   //20mb per xp following convention set by EnderIO; OpenBlocks; and Reliquary https://github.com/PrinceOfAmber/Cyclic/issues/599
   public static final int FLUID_PER_EXP = 20;
   public static final int EXP_PER_BOTTLE = 11;
-  private static final int RADIUS = 16;
+  public static IntValue RADIUS;
   public static final int CAPACITY = 64000 * FluidAttributes.BUCKET_VOLUME;
   public FluidTankBase tank = new FluidTankBase(this, CAPACITY, isFluidValid());
   LazyOptional<FluidTankBase> fluidCap = LazyOptional.of(() -> tank);
@@ -72,7 +74,7 @@ public class TileExpPylon extends TileBlockEntityCyclic implements MenuProvider 
   }
 
   public Predicate<FluidStack> isFluidValid() {
-    return p -> p.getFluid().is(DataTags.EXPERIENCE);
+    return p -> FluidHelpers.matches(p.getFluid(), DataTags.EXPERIENCE);
   }
 
   @Override
@@ -112,7 +114,7 @@ public class TileExpPylon extends TileBlockEntityCyclic implements MenuProvider 
     List<Player> players = level.getEntitiesOfClass(Player.class,
         new AABB(this.getBlockPos().above()));
     for (Player p : players) {
-      double myTotal = UtilPlayer.getExpTotal(p);
+      double myTotal = PlayerUtil.getExpTotal(p);
       if (p.isCrouching() && myTotal > 0) {
         //go
         int addMeXp = 1;
@@ -143,7 +145,7 @@ public class TileExpPylon extends TileBlockEntityCyclic implements MenuProvider 
           p.giveExperiencePoints(-1 * addMeXp);
           tank.fill(new FluidStack(FluidXpJuiceHolder.STILL.get(), addMeFluid), FluidAction.EXECUTE);
           //  ModCyclic.LOGGER.info("tank.getFluidAmount() = " + tank.getFluidAmount());
-          UtilSound.playSound(p, SoundEvents.EXPERIENCE_ORB_PICKUP);
+          SoundUtil.playSound(p, SoundEvents.EXPERIENCE_ORB_PICKUP);
           this.setChanged();
         }
       }
@@ -151,9 +153,10 @@ public class TileExpPylon extends TileBlockEntityCyclic implements MenuProvider 
   }
 
   private void collectLocalExperience() {
+    final int radius = RADIUS.get();
     List<ExperienceOrb> list = level.getEntitiesOfClass(ExperienceOrb.class, new AABB(
-        worldPosition.getX() - RADIUS, worldPosition.getY() - 1, worldPosition.getZ() - RADIUS,
-        worldPosition.getX() + RADIUS, worldPosition.getY() + 2, worldPosition.getZ() + RADIUS), (entity) -> {
+        worldPosition.getX() - radius, worldPosition.getY() - 1, worldPosition.getZ() - radius,
+        worldPosition.getX() + radius, worldPosition.getY() + 2, worldPosition.getZ() + radius), (entity) -> {
           return entity.isAlive() && entity.getValue() > 0;
           //entity != null && entity.getHorizontalFacing() == facing;
         });

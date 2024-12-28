@@ -10,7 +10,7 @@
       "item": "minecraft:iron_ingot"
     },
     "o": {
-      "item": "minecraft:obsidian"
+      "tag": "forge:obsidian"
     }
   },
   "result": {

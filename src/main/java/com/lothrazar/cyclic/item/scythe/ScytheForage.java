@@ -25,11 +25,12 @@ package com.lothrazar.cyclic.item.scythe;
 
 import com.lothrazar.cyclic.item.ItemBaseCyclic;
 import com.lothrazar.cyclic.registry.PacketRegistry;
-import com.lothrazar.cyclic.util.UtilItemStack;
+import com.lothrazar.cyclic.util.ItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 
 public class ScytheForage extends ItemBaseCyclic {
 
@@ -37,8 +38,7 @@ public class ScytheForage extends ItemBaseCyclic {
     super(properties);
   }
 
-  private static final int RADIUS = 6; //13x13
-  private static final int RADIUS_SNEAKING = 2; //2x2
+  public static IntValue RADIUS;
 
   @Override
   public InteractionResult useOn(UseOnContext context) {
@@ -47,12 +47,12 @@ public class ScytheForage extends ItemBaseCyclic {
     if (side != null) {
       pos = pos.relative(side);
     }
-    int radius = (context.getPlayer().isCrouching()) ? RADIUS_SNEAKING : RADIUS;
+    int radius = (context.getPlayer().isCrouching()) ? RADIUS.get() / 2 : RADIUS.get();
     if (context.getLevel().isClientSide) {
       PacketRegistry.INSTANCE.sendToServer(new PacketScythe(pos, ScytheType.FORAGE, radius));
     }
     context.getPlayer().swing(context.getHand());
-    UtilItemStack.damageItem(context.getPlayer(), context.getItemInHand());
+    ItemStackUtil.damageItem(context.getPlayer(), context.getItemInHand());
     return super.useOn(context);
   }
 }

@@ -3,13 +3,14 @@ package com.lothrazar.cyclic.block.disenchant;
 import java.util.Map;
 import com.google.common.collect.Maps;
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
-import com.lothrazar.cyclic.capabilities.CustomEnergyStorage;
-import com.lothrazar.cyclic.capabilities.FluidTankBase;
 import com.lothrazar.cyclic.capabilities.ItemStackHandlerWrapper;
+import com.lothrazar.cyclic.capabilities.block.CustomEnergyStorage;
+import com.lothrazar.cyclic.capabilities.block.FluidTankBase;
 import com.lothrazar.cyclic.data.DataTags;
 import com.lothrazar.cyclic.fluid.FluidXpJuiceHolder;
 import com.lothrazar.cyclic.registry.TileRegistry;
-import com.lothrazar.cyclic.util.UtilSound;
+import com.lothrazar.cyclic.util.FluidHelpers;
+import com.lothrazar.cyclic.util.SoundUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -73,7 +74,7 @@ public class TileDisenchant extends TileBlockEntityCyclic implements MenuProvide
   public static IntValue FLUIDCOST;
   private LazyOptional<IEnergyStorage> energyCap = LazyOptional.of(() -> energy);
   public FluidTankBase tank = new FluidTankBase(this, CAPACITY, p -> {
-    return p.getFluid().is(DataTags.EXPERIENCE);
+    return FluidHelpers.matches(p.getFluid(), DataTags.EXPERIENCE);
   });
   LazyOptional<FluidTankBase> fluidCap = LazyOptional.of(() -> tank);
 
@@ -127,10 +128,10 @@ public class TileDisenchant extends TileBlockEntityCyclic implements MenuProvide
     //and input has at least one enchantment 
     //success happening
     if (level.random.nextDouble() < 0.5) {
-      UtilSound.playSound(level, worldPosition, SoundEvents.ENCHANTMENT_TABLE_USE);
+      SoundUtil.playSound(level, worldPosition, SoundEvents.ENCHANTMENT_TABLE_USE);
     }
     else {
-      UtilSound.playSound(level, worldPosition, SoundEvents.ANVIL_USE);
+      SoundUtil.playSound(level, worldPosition, SoundEvents.ANVIL_USE);
     }
     energy.extractEnergy(cost, false);
     if (FLUIDCOST.get() > 0) {

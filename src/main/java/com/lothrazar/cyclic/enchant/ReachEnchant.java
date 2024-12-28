@@ -44,7 +44,7 @@ public class ReachEnchant extends EnchantmentCyclic {
 
   public ReachEnchant(Rarity rarityIn, EnchantmentCategory typeIn, EquipmentSlot... slots) {
     super(rarityIn, typeIn, slots);
-    MinecraftForge.EVENT_BUS.register(this);
+    if (isEnabled()) MinecraftForge.EVENT_BUS.register(this);
   }
 
   @Override
@@ -53,18 +53,33 @@ public class ReachEnchant extends EnchantmentCyclic {
   }
 
   @Override
-  public int getMaxLevel() {
-    return 1;
+  public boolean isTradeable() {
+    return isEnabled() && super.isTradeable();
+  }
+
+  @Override
+  public boolean isDiscoverable() {
+    return isEnabled() && super.isDiscoverable();
+  }
+
+  @Override
+  public boolean isAllowedOnBooks() {
+    return isEnabled() && super.isAllowedOnBooks();
   }
 
   @Override
   public boolean canEnchant(ItemStack stack) {
-    return true;
+    return isEnabled() && super.canEnchant(stack);
   }
 
   @Override
   public boolean canApplyAtEnchantingTable(ItemStack stack) {
-    return this.canEnchant(stack);
+    return isEnabled() && super.canApplyAtEnchantingTable(stack);
+  }
+
+  @Override
+  public int getMaxLevel() {
+    return 1;
   }
 
   public static final UUID ENCHANTMENT_REACH_ID = UUID.fromString("1abcdef2-eff2-4a81-b92b-a1cb95f115c6");

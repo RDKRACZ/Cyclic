@@ -2,44 +2,70 @@ package com.lothrazar.cyclic.block.generatorfluid;
 
 import com.google.gson.JsonObject;
 import com.lothrazar.cyclic.ModCyclic;
-import com.lothrazar.cyclic.recipe.CyclicRecipe;
-import com.lothrazar.cyclic.recipe.CyclicRecipeType;
 import com.lothrazar.cyclic.recipe.ingredient.EnergyIngredient;
 import com.lothrazar.cyclic.recipe.ingredient.FluidTagIngredient;
+import com.lothrazar.cyclic.registry.CyclicRecipeType;
+import com.lothrazar.cyclic.util.RecipeUtil;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 
-@SuppressWarnings("rawtypes")
-public class RecipeGeneratorFluid<TileEntityBase> extends CyclicRecipe {
+public class RecipeGeneratorFluid implements Recipe<TileGeneratorFluid> {
 
+  private final ResourceLocation id;
   private NonNullList<Ingredient> ingredients = NonNullList.create();
   public final FluidTagIngredient fluidIng;
   private final EnergyIngredient energy;
 
   public RecipeGeneratorFluid(ResourceLocation id, FluidTagIngredient in, EnergyIngredient energy) {
-    super(id);
+    this.id = id;
     this.fluidIng = in;
     this.energy = energy;
   }
 
   @Override
+  public boolean isSpecial() {
+    return true;
+  }
+
+  @Override
+  public ItemStack assemble(TileGeneratorFluid inv) {
+    return ItemStack.EMPTY;
+  }
+
+  @Override
+  public boolean canCraftInDimensions(int width, int height) {
+    return true;
+  }
+
+  @Override
+  public ItemStack getResultItem() {
+    return ItemStack.EMPTY;
+  }
+
+  @Override
+  public ResourceLocation getId() {
+    return id;
+  }
+
+  //  @Override
   public FluidStack getRecipeFluid() {
     return fluidIng.getFluidStack();
   }
 
   @Override
-  public boolean matches(com.lothrazar.cyclic.block.TileBlockEntityCyclic inv, Level worldIn) {
+  public boolean matches(TileGeneratorFluid inv, Level worldIn) {
     try {
-      TileGeneratorFluid tile = (TileGeneratorFluid) inv;
-      return CyclicRecipe.matchFluid(tile.getFluid(), this.fluidIng);
+      TileGeneratorFluid tile = inv;
+      return RecipeUtil.matchFluid(tile.getFluid(), this.fluidIng);
     }
     catch (ClassCastException e) {
       return false;
@@ -68,18 +94,13 @@ public class RecipeGeneratorFluid<TileEntityBase> extends CyclicRecipe {
   }
 
   @Override
-  public ItemStack getResultItem() {
-    return ItemStack.EMPTY;
-  }
-
-  @Override
   public RecipeType<?> getType() {
-    return CyclicRecipeType.GENERATOR_FLUID;
+    return CyclicRecipeType.GENERATOR_FLUID.get();
   }
 
   @Override
   public RecipeSerializer<?> getSerializer() {
-    return SERIALGENERATORF;
+    return CyclicRecipeType.GENERATOR_FLUID_S.get();
   }
 
   public int getTicks() {
@@ -94,25 +115,19 @@ public class RecipeGeneratorFluid<TileEntityBase> extends CyclicRecipe {
     return this.getRfpertick() * this.getTicks();
   }
 
-  public static final SerializeGenerateFluid SERIALGENERATORF = new SerializeGenerateFluid();
+  public static class SerializeGenerateFluid extends ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<RecipeGeneratorFluid> {
 
-  public static class SerializeGenerateFluid extends ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<RecipeGeneratorFluid<? extends com.lothrazar.cyclic.block.TileBlockEntityCyclic>> {
-
-    SerializeGenerateFluid() {
-      // This registry name is what people will specify in their json files.
-      this.setRegistryName(new ResourceLocation(ModCyclic.MODID, "generator_fluid"));
-    }
+    public SerializeGenerateFluid() {}
 
     /**
      * The fluid stuff i was helped out a ton by looking at this https://github.com/mekanism/Mekanism/blob/921d10be54f97518c1f0cb5a6fc64bf47d5e6773/src/api/java/mekanism/api/SerializerHelper.java#L129
      */
-    @SuppressWarnings("unchecked")
     @Override
-    public RecipeGeneratorFluid<? extends com.lothrazar.cyclic.block.TileBlockEntityCyclic> fromJson(ResourceLocation recipeId, JsonObject json) {
+    public RecipeGeneratorFluid fromJson(ResourceLocation recipeId, JsonObject json) {
       RecipeGeneratorFluid r = null;
       try {
         //        Ingredient inputFirst = Ingredient.deserialize(JSONUtils.getJsonObject(json, "fuel"));
-        FluidTagIngredient fs = parseFluid(json, "fuel");
+        FluidTagIngredient fs = RecipeUtil.parseFluid(json, "fuel");
         r = new RecipeGeneratorFluid(recipeId, fs, new EnergyIngredient(json));
       }
       catch (Exception e) {

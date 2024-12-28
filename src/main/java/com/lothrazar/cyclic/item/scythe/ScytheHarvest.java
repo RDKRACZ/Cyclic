@@ -4,13 +4,14 @@ import java.util.List;
 import com.lothrazar.cyclic.item.ItemBaseCyclic;
 import com.lothrazar.cyclic.net.PacketHarvesting;
 import com.lothrazar.cyclic.registry.PacketRegistry;
-import com.lothrazar.cyclic.util.UtilItemStack;
-import com.lothrazar.cyclic.util.UtilShape;
+import com.lothrazar.cyclic.util.ItemStackUtil;
+import com.lothrazar.cyclic.util.ShapeUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 
 public class ScytheHarvest extends ItemBaseCyclic {
 
@@ -18,11 +19,10 @@ public class ScytheHarvest extends ItemBaseCyclic {
     super(properties);
   }
 
-  private static final int RADIUS = 6; //13x13
-  private static final int RADIUS_SNEAKING = 2; //2x2
+  public static IntValue RADIUS;
 
   public List<BlockPos> getShape(BlockPos pos, int radius) {
-    return UtilShape.squareHorizontalFull(pos, radius);
+    return ShapeUtil.squareHorizontalFull(pos, radius);
   }
 
   @Override
@@ -34,11 +34,11 @@ public class ScytheHarvest extends ItemBaseCyclic {
     }
     Player player = context.getPlayer();
     if (player.level.isClientSide) {
-      int radius = (player.isCrouching()) ? RADIUS_SNEAKING : RADIUS;
+      int radius = (context.getPlayer().isCrouching()) ? RADIUS.get() / 2 : RADIUS.get();
       PacketRegistry.INSTANCE.sendToServer(new PacketHarvesting(pos, radius));
     }
     player.swing(context.getHand());
-    UtilItemStack.damageItem(player, context.getItemInHand());
+    ItemStackUtil.damageItem(player, context.getItemInHand());
     return super.useOn(context);
   }
 }

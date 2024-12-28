@@ -10,14 +10,15 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 import net.minecraftforge.common.ForgeConfigSpec.DoubleValue;
+import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 
 public class TileTerraPreta extends TileBlockEntityCyclic {
 
   public static IntValue TIMER_FULL;
-  public static final int HEIGHT = 16;
+  public static IntValue HEIGHT;
   public static DoubleValue CHANCE;
+  //  public static final double ODDS_DEFAULT = 0.5; 
 
   public TileTerraPreta(BlockPos pos, BlockState state) {
     super(TileRegistry.TERRA_PRETA.get(), pos, state);
@@ -38,7 +39,7 @@ public class TileTerraPreta extends TileBlockEntityCyclic {
       return;
     }
     timer = TIMER_FULL.get();
-    for (int h = 0; h < HEIGHT; h++) {
+    for (int h = 0; h < HEIGHT.get(); h++) {
       BlockPos current = this.getBlockPos().above(h);
       grow(level, current, CHANCE.get());
     }

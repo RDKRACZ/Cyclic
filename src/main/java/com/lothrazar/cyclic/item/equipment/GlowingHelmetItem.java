@@ -5,9 +5,9 @@ import com.lothrazar.cyclic.api.IHasClickToggle;
 import com.lothrazar.cyclic.data.Const;
 import com.lothrazar.cyclic.registry.ItemRegistry;
 import com.lothrazar.cyclic.util.CharmUtil;
-import com.lothrazar.cyclic.util.UtilChat;
-import com.lothrazar.cyclic.util.UtilNBT;
-import com.lothrazar.cyclic.util.UtilPlayer;
+import com.lothrazar.cyclic.util.ChatUtil;
+import com.lothrazar.cyclic.util.PlayerUtil;
+import com.lothrazar.cyclic.util.TagDataUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -20,6 +20,7 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -33,6 +34,11 @@ public class GlowingHelmetItem extends ArmorItem implements IHasClickToggle {
   }
 
   @Override
+  public Rarity getRarity(ItemStack stack) {
+    return Rarity.UNCOMMON;
+  }
+
+  @Override
   public void onArmorTick(ItemStack stack, Level world, Player player) {
     boolean isTurnedOn = this.isOn(stack);
     removeNightVision(player, isTurnedOn);
@@ -43,9 +49,9 @@ public class GlowingHelmetItem extends ArmorItem implements IHasClickToggle {
 
   @Override
   public void appendHoverText(ItemStack stack, Level worldIn, List<Component> tooltip, TooltipFlag flagIn) {
-    tooltip.add(new TranslatableComponent(UtilChat.lang(this.getDescriptionId() + ".tooltip")).withStyle(ChatFormatting.GRAY));
+    tooltip.add(new TranslatableComponent(ChatUtil.lang(this.getDescriptionId() + ".tooltip")).withStyle(ChatFormatting.GRAY));
     String onoff = this.isOn(stack) ? "on" : "off";
-    TranslatableComponent t = new TranslatableComponent(UtilChat.lang("item.cantoggle.tooltip.info") + " " + UtilChat.lang("item.cantoggle.tooltip." + onoff));
+    TranslatableComponent t = new TranslatableComponent(ChatUtil.lang("item.cantoggle.tooltip.info") + " " + ChatUtil.lang("item.cantoggle.tooltip." + onoff));
     t.withStyle(ChatFormatting.DARK_GRAY);
     tooltip.add(t);
     super.appendHoverText(stack, worldIn, tooltip, flagIn);
@@ -61,7 +67,7 @@ public class GlowingHelmetItem extends ArmorItem implements IHasClickToggle {
   }
 
   private static void checkIfHelmOff(Player player) {
-    Item itemInSlot = UtilPlayer.getItemArmorSlot(player, EquipmentSlot.HEAD);
+    Item itemInSlot = PlayerUtil.getItemArmorSlot(player, EquipmentSlot.HEAD);
     if (itemInSlot instanceof GlowingHelmetItem) {
       //turn it off once, from the message
       removeNightVision(player, false);
@@ -70,7 +76,7 @@ public class GlowingHelmetItem extends ArmorItem implements IHasClickToggle {
 
   @Override
   public void toggle(Player player, ItemStack held) {
-    CompoundTag tags = UtilNBT.getItemStackNBT(held);
+    CompoundTag tags = TagDataUtil.getItemStackNBT(held);
     int vnew = isOn(held) ? 0 : 1;
     tags.putInt(NBT_STATUS, vnew);
   }
@@ -82,7 +88,7 @@ public class GlowingHelmetItem extends ArmorItem implements IHasClickToggle {
   }
 
   private static boolean isOnStatic(ItemStack held) {
-    CompoundTag tags = UtilNBT.getItemStackNBT(held);
+    CompoundTag tags = TagDataUtil.getItemStackNBT(held);
     if (!tags.contains(NBT_STATUS)) {
       return true;
     } //default for newlycrafted//legacy items
@@ -92,15 +98,9 @@ public class GlowingHelmetItem extends ArmorItem implements IHasClickToggle {
   //from ItemEvents- curios slot
   public static void onEntityUpdate(LivingEvent.LivingUpdateEvent event) {
     //reduce check to only once per second instead  of per tick
-    //<<<<<<< HEAD
     if (event.getEntity().level.getGameTime() % 20 == 0 &&
         event.getEntityLiving() != null) { //some of the items need an off switch
       Player player = (Player) event.getEntityLiving();
-      //=======
-      //    if (event.getEntity().world.getGameTime() % 20 == 0 &&
-      //        event.getEntityLiving() instanceof PlayerEntity) { //some of the items need an off switch
-      //      PlayerEntity player = (PlayerEntity) event.getEntityLiving();
-      //>>>>>>> 9f4791a4f5c1dbc36e417a790d13312fb60c6528
       checkIfHelmOff(player);
       // get helm
       ItemStack helm = CharmUtil.getCurio(player, ItemRegistry.GLOWING_HELMET.get());

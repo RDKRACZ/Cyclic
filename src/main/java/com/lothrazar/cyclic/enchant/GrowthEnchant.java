@@ -25,10 +25,11 @@ package com.lothrazar.cyclic.enchant;
 
 import java.util.Collections;
 import java.util.List;
-import com.lothrazar.cyclic.util.HarvestUtil;
-import com.lothrazar.cyclic.util.UtilItemStack;
-import com.lothrazar.cyclic.util.UtilShape;
+import com.lothrazar.cyclic.util.GrowthUtil;
+import com.lothrazar.cyclic.util.ItemStackUtil;
+import com.lothrazar.cyclic.util.ShapeUtil;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -36,23 +37,23 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentCategory;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
+import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class GrowthEnchant extends EnchantmentCyclic {
 
-  //TODO config
-  public static final double ODDS_ROTATE = 0.04;
+  public static final int HEIGHT = 2;
+  public static final double ODDS = 0.04;
   public static final String ID = "growth";
   public static BooleanValue CFG;
+  public static IntValue RADIUSFACTOR;
 
   public GrowthEnchant(Rarity rarityIn, EnchantmentCategory typeIn, EquipmentSlot... slots) {
     super(rarityIn, typeIn, slots);
-    MinecraftForge.EVENT_BUS.register(this);
+    if (isEnabled()) MinecraftForge.EVENT_BUS.register(this);
   }
 
   @Override
@@ -61,18 +62,33 @@ public class GrowthEnchant extends EnchantmentCyclic {
   }
 
   @Override
-  public int getMaxLevel() {
-    return 3;
+  public boolean isTradeable() {
+    return isEnabled() && super.isTradeable();
   }
 
   @Override
-  public boolean canApplyAtEnchantingTable(ItemStack stack) {
-    return stack.getItem() instanceof HoeItem;
+  public boolean isDiscoverable() {
+    return isEnabled() && super.isDiscoverable();
+  }
+
+  @Override
+  public boolean isAllowedOnBooks() {
+    return isEnabled() && super.isAllowedOnBooks();
   }
 
   @Override
   public boolean canEnchant(ItemStack stack) {
-    return canApplyAtEnchantingTable(stack);
+    return isEnabled() && super.canEnchant(stack) && stack.getItem() instanceof HoeItem;
+  }
+
+  @Override
+  public boolean canApplyAtEnchantingTable(ItemStack stack) {
+    return isEnabled() && super.canApplyAtEnchantingTable(stack);
+  }
+
+  @Override
+  public int getMaxLevel() {
+    return 3;
   }
 
   @SubscribeEvent
@@ -89,36 +105,23 @@ public class GrowthEnchant extends EnchantmentCyclic {
     }
     //Ticking
     int level = getCurrentLevelTool(entity.getItemInHand(InteractionHand.MAIN_HAND));
-    if (level > 0 && !entity.level.isClientSide) {
-      if (entity.level.random.nextDouble() > ODDS_ROTATE / level) {
+    if (level > 0 && entity.level instanceof ServerLevel sw) {
+      if (entity.level.random.nextDouble() > ODDS / level) {
         return; //slow the dice down
       }
       final int growthLimit = level * 2 + (entity.level.isRaining() ? 4 : 1); //faster when raining too 
       int grown = 0;
-      List<BlockPos> shape = UtilShape.squareHorizontalFull(entity.blockPosition().below(), level + 2);
-      shape = UtilShape.repeatShapeByHeight(shape, 2);
+      List<BlockPos> shape = ShapeUtil.squareHorizontalFull(entity.blockPosition().below(), level + RADIUSFACTOR.get());
+      shape = ShapeUtil.repeatShapeByHeight(shape, HEIGHT);
       Collections.shuffle(shape);
       for (int i = 0; i < shape.size(); i++) {
         if (grown >= growthLimit) {
           break;
         }
-        //do one
-        BlockPos pos = shape.get(i);
-        BlockState target = entity.level.getBlockState(pos);
-        IntegerProperty propAge = HarvestUtil.getAgeProp(target);
-        if (propAge == null) {
-          continue;
-        }
-        int maxAge = Collections.max(propAge.getPossibleValues());
-        Integer currentAge = target.getValue(propAge);
-        if (currentAge < maxAge) {
-          if (entity.level.setBlockAndUpdate(pos, target.setValue(propAge, currentAge + 1))) {
-            grown++;
-          }
-        }
+        GrowthUtil.tryGrow(sw, shape.get(i), ODDS * 10);
       }
       if (grown > 0) {
-        UtilItemStack.damageItem(entity, entity.getItemInHand(InteractionHand.MAIN_HAND));
+        ItemStackUtil.damageItem(entity, entity.getItemInHand(InteractionHand.MAIN_HAND));
       }
     }
   }

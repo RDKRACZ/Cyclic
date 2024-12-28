@@ -3,12 +3,13 @@ package com.lothrazar.cyclic.block.dropper;
 import java.util.ArrayList;
 import java.util.List;
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
-import com.lothrazar.cyclic.capabilities.CustomEnergyStorage;
+import com.lothrazar.cyclic.capabilities.block.CustomEnergyStorage;
 import com.lothrazar.cyclic.data.BlockPosDim;
+import com.lothrazar.cyclic.data.PreviewOutlineType;
 import com.lothrazar.cyclic.item.datacard.LocationGpsCard;
 import com.lothrazar.cyclic.registry.TileRegistry;
-import com.lothrazar.cyclic.util.UtilItemStack;
-import com.lothrazar.cyclic.util.UtilWorld;
+import com.lothrazar.cyclic.util.ItemStackUtil;
+import com.lothrazar.cyclic.util.LevelWorldUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -96,7 +97,7 @@ public class TileDropper extends TileBlockEntityCyclic implements MenuProvider {
     if (amtDrop > 0) {
       energy.extractEnergy(cost, false);
       dropMe.setCount(amtDrop);
-      UtilItemStack.dropItemStackMotionless(level, target, dropMe);
+      ItemStackUtil.dropItemStackMotionless(level, target, dropMe);
       inventory.getStackInSlot(0).shrink(amtDrop);
     }
   }
@@ -156,7 +157,7 @@ public class TileDropper extends TileBlockEntityCyclic implements MenuProvider {
 
   private BlockPos getTargetPos() {
     BlockPosDim loc = LocationGpsCard.getPosition(this.gpsSlots.getStackInSlot(0));
-    if (loc != null && UtilWorld.dimensionIsEqual(loc, level)) {
+    if (loc != null && LevelWorldUtil.dimensionIsEqual(loc, level)) {
       return loc.getPos();
     }
     return this.getCurrentFacingPos().relative(this.getCurrentFacing(), 1);
@@ -195,9 +196,13 @@ public class TileDropper extends TileBlockEntityCyclic implements MenuProvider {
         dropCount = Math.max(1, value);
       break;
       case RENDER:
-        this.render = value % 2;
+        this.render = value % PreviewOutlineType.values().length;
       break;
     }
+  }
+
+  public List<BlockPos> getShapeHollow() {
+    return getShape();
   }
 
   public List<BlockPos> getShape() {

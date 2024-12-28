@@ -25,12 +25,13 @@ package com.lothrazar.cyclic.item.transporter;
 
 import java.util.List;
 import com.lothrazar.cyclic.ModCyclic;
+import com.lothrazar.cyclic.config.ConfigRegistry;
 import com.lothrazar.cyclic.item.ItemBaseCyclic;
 import com.lothrazar.cyclic.registry.ItemRegistry;
 import com.lothrazar.cyclic.registry.SoundRegistry;
-import com.lothrazar.cyclic.util.UtilChat;
-import com.lothrazar.cyclic.util.UtilItemStack;
-import com.lothrazar.cyclic.util.UtilSound;
+import com.lothrazar.cyclic.util.ChatUtil;
+import com.lothrazar.cyclic.util.ItemStackUtil;
+import com.lothrazar.cyclic.util.SoundUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -49,6 +50,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -80,9 +83,9 @@ public class TileTransporterItem extends ItemBaseCyclic {
     }
     if (placeStoredTileEntity(player, stack, offset)) {
       player.setItemInHand(context.getHand(), ItemStack.EMPTY);
-      UtilSound.playSound(player, SoundRegistry.THUNK);
+      SoundUtil.playSound(player, SoundRegistry.THUNK.get());
       if (player.isCreative() == false) {
-        UtilItemStack.drop(world, player.blockPosition(), new ItemStack(ItemRegistry.TILE_TRANSPORTER_EMPTY.get()));
+        ItemStackUtil.dropItemStackMotionless(world, player.blockPosition(), new ItemStack(ItemRegistry.TILE_TRANSPORTER_EMPTY.get()));
       }
     }
     return InteractionResult.SUCCESS;
@@ -94,10 +97,16 @@ public class TileTransporterItem extends ItemBaseCyclic {
     Block block = ForgeRegistries.BLOCKS.getValue(res);
     if (block == null) {
       heldChestSack = ItemStack.EMPTY;
-      UtilChat.addChatMessage(player, "Invalid block id " + res);
+      ChatUtil.addChatMessage(player, "Invalid block id " + res);
       return false;
     }
     BlockState toPlace = NbtUtils.readBlockState(itemData.getCompound(KEY_BLOCKSTATE));
+    if (ConfigRegistry.OVERRIDE_TRANSPORTER_SINGLETON.get()) {
+      if (toPlace.hasProperty(BlockStateProperties.CHEST_TYPE)
+          && toPlace.getValue(BlockStateProperties.CHEST_TYPE) != ChestType.SINGLE) {
+        toPlace = toPlace.setValue(BlockStateProperties.CHEST_TYPE, ChestType.SINGLE);
+      }
+    }
     //maybe get from player direction or offset face, but instead rely on that from saved data
     Level world = player.getCommandSenderWorld();
     try {
@@ -111,16 +120,15 @@ public class TileTransporterItem extends ItemBaseCyclic {
         tile.load(tileData); // can cause errors in 3rd party mod
         //example at extracells.tileentity.TileEntityFluidFiller.func_145839_a(TileEntityFluidFiller.java:302) ~
         tile.setChanged();
-        world.blockEntityChanged(pos);
+        world.blockEntityChangedWithoutNeighborUpdates(pos);
       }
     }
     catch (Exception e) {
       ModCyclic.LOGGER.error("Error attempting to place block in world", e);
-      UtilChat.sendStatusMessage(player, "chest_sack.error.place");
+      ChatUtil.sendStatusMessage(player, "chest_sack.error.place");
       world.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
       return false;
     }
-    //    heldChestSack.stackSize = 0;
     heldChestSack = ItemStack.EMPTY;
     heldChestSack.setTag(null);
     return true;
@@ -132,13 +140,13 @@ public class TileTransporterItem extends ItemBaseCyclic {
     if (itemStack.getTag() != null && itemStack.getTag().contains(KEY_BLOCKNAME)) {
       String blockname = itemStack.getTag().getString(KEY_BLOCKNAME);
       if (blockname != null && blockname.length() > 0) {
-        TranslatableComponent t = new TranslatableComponent(UtilChat.lang(blockname));
+        TranslatableComponent t = new TranslatableComponent(ChatUtil.lang(blockname));
         t.withStyle(ChatFormatting.DARK_GREEN);
         list.add(t);
       }
     }
     else {
-      TranslatableComponent t = new TranslatableComponent(UtilChat.lang("invalid"));
+      TranslatableComponent t = new TranslatableComponent(ChatUtil.lang("invalid"));
       t.withStyle(ChatFormatting.DARK_RED);
       list.add(t);
     }

@@ -3,7 +3,7 @@ package com.lothrazar.cyclic.gui;
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
 import com.lothrazar.cyclic.net.PacketTileData;
 import com.lothrazar.cyclic.registry.PacketRegistry;
-import com.lothrazar.cyclic.util.UtilChat;
+import com.lothrazar.cyclic.util.ChatUtil;
 import net.minecraft.core.BlockPos;
 
 public class ButtonMachineField extends ButtonMachine {
@@ -11,6 +11,7 @@ public class ButtonMachineField extends ButtonMachine {
   BlockPos tilePos;
   private TextureEnum textureOne;
   private TextureEnum textureZero;
+  private TextureEnum textureTwo = TextureEnum.RENDER_OUTLINE;
   private String tooltipPrefix;
 
   public ButtonMachineField(int xPos, int yPos, int field, BlockPos pos) {
@@ -42,7 +43,17 @@ public class ButtonMachineField extends ButtonMachine {
   }
 
   private void onValueUpdate(int val) {
-    setTooltip(UtilChat.lang(this.tooltipPrefix + val));
-    setTextureId(val == 1 ? textureOne : textureZero);
+    setTooltip(ChatUtil.lang(this.tooltipPrefix + val));
+    switch (val) {
+      case 0:
+        setTextureId(textureZero);
+      break;
+      case 1:
+        setTextureId(textureOne);
+      break;
+      case 2:
+        setTextureId(textureTwo);
+      break;
+    }
   }
 }

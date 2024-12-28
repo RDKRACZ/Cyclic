@@ -2,13 +2,14 @@ package com.lothrazar.cyclic.block.fan;
 
 import java.util.List;
 import com.lothrazar.cyclic.block.TileBlockEntityCyclic;
+import com.lothrazar.cyclic.data.PreviewOutlineType;
 import com.lothrazar.cyclic.item.datacard.EntityDataCard;
 import com.lothrazar.cyclic.net.PacketPlayerFalldamage;
 import com.lothrazar.cyclic.registry.ItemRegistry;
 import com.lothrazar.cyclic.registry.PacketRegistry;
 import com.lothrazar.cyclic.registry.TileRegistry;
-import com.lothrazar.cyclic.util.UtilPlayer;
-import com.lothrazar.cyclic.util.UtilShape;
+import com.lothrazar.cyclic.util.PlayerUtil;
+import com.lothrazar.cyclic.util.ShapeUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -29,7 +30,7 @@ import net.minecraftforge.items.ItemStackHandler;
 public class TileFan extends TileBlockEntityCyclic implements MenuProvider {
 
   static enum Fields {
-    REDSTONE, RANGE, SPEED;
+    REDSTONE, RANGE, SPEED, RENDER;
   }
 
   public static final int MIN_RANGE = 1;
@@ -102,8 +103,12 @@ public class TileFan extends TileBlockEntityCyclic implements MenuProvider {
     return !level.getBlockState(tester).canOcclude();
   }
 
+  public List<BlockPos> getShapeHollow() {
+    return getShape();
+  }
+
   public List<BlockPos> getShape() {
-    return UtilShape.line(getBlockPos(), getCurrentFacing(), getCurrentRange());
+    return ShapeUtil.line(getBlockPos(), getCurrentFacing(), getCurrentRange());
   }
 
   private int pushEntities() {
@@ -159,7 +164,7 @@ public class TileFan extends TileBlockEntityCyclic implements MenuProvider {
     int direction = 1;
     float speed = this.getSpeedCalc();
     for (Entity entity : entitiesFound) {
-      if (UtilPlayer.isPlayerCrouching(entity)) {
+      if (PlayerUtil.isPlayerCrouching(entity)) {
         continue; //sneak avoid feature
       }
       if (EntityDataCard.hasEntity(filter.getStackInSlot(0))
@@ -199,7 +204,7 @@ public class TileFan extends TileBlockEntityCyclic implements MenuProvider {
       }
       entity.setDeltaMovement(newx, newy, newz);
       if (level.isClientSide && entity.tickCount % PacketPlayerFalldamage.TICKS_FALLDIST_SYNC == 0
-          && entity instanceof Player) {
+          && entity instanceof Player p) {
         PacketRegistry.INSTANCE.sendToServer(new PacketPlayerFalldamage());
       }
     }
@@ -231,6 +236,8 @@ public class TileFan extends TileBlockEntityCyclic implements MenuProvider {
         return this.needsRedstone;
       case SPEED:
         return this.speed;
+      case RENDER:
+        return this.render;
     }
     return 0;
   }
@@ -239,6 +246,9 @@ public class TileFan extends TileBlockEntityCyclic implements MenuProvider {
   public void setField(int field, int value) {
     Fields f = Fields.values()[field];
     switch (f) {
+      case RENDER:
+        this.render = value % PreviewOutlineType.values().length;
+      break;
       case RANGE:
         range = value;
         if (range < MIN_RANGE) {

@@ -1,9 +1,12 @@
 package com.lothrazar.cyclic.item;
 
+import java.util.ArrayList;
 import java.util.List;
-import com.lothrazar.cyclic.capabilities.CapabilityProviderEnergyStack;
+import com.lothrazar.cyclic.capabilities.block.CustomEnergyStorage;
+import com.lothrazar.cyclic.capabilities.item.CapabilityProviderEnergyStack;
 import com.lothrazar.cyclic.registry.ItemRegistry;
-import com.lothrazar.cyclic.util.UtilItemStack;
+import com.lothrazar.cyclic.registry.TextureRegistry;
+import com.lothrazar.cyclic.util.ItemStackUtil;
 import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 import net.minecraft.ChatFormatting;
@@ -15,6 +18,7 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -26,6 +30,7 @@ import net.minecraftforge.energy.IEnergyStorage;
 
 public class ItemBaseCyclic extends Item {
 
+  private static final int MAX_ENERGY = 16000;
   public static final String ENERGYTTMAX = "energyttmax";
   public static final String ENERGYTT = "energytt";
   public static final float INACCURACY_DEFAULT = 1.0F;
@@ -57,7 +62,7 @@ public class ItemBaseCyclic extends Item {
     world.addFreshEntity(ball);
   }
 
-  protected ItemStack findAmmo(Player player, Item item) {
+  public static ItemStack findAmmo(Player player, Item item) {
     for (int i = 0; i < player.getInventory().getContainerSize(); ++i) {
       ItemStack itemstack = player.getInventory().getItem(i);
       if (itemstack.getItem() == item) {
@@ -67,18 +72,53 @@ public class ItemBaseCyclic extends Item {
     return ItemStack.EMPTY;
   }
 
+  public static List<ItemStack> findAmmos(Player player, Item item) {
+    List<ItemStack> list = new ArrayList<>();
+    for (int i = 0; i < player.getInventory().getContainerSize(); ++i) {
+      ItemStack itemstack = player.getInventory().getItem(i);
+      if (itemstack.getItem() == item) {
+        list.add(itemstack);
+      }
+    }
+    return list;
+  }
+
+  /**
+   * 1 item(torch) per durability default, override for higher
+   *
+   */
+  public int getRepairPerItem() {
+    return 1;
+  }
+
   public void tryRepairWith(ItemStack stackToRepair, Player player, Item target) {
     if (stackToRepair.isDamaged()) {
-      ItemStack torches = this.findAmmo(player, target);
+      ItemStack torches = findAmmo(player, target);
       if (!torches.isEmpty()) {
         torches.shrink(1);
-        UtilItemStack.repairItem(stackToRepair);
+        ItemStackUtil.repairItem(stackToRepair, getRepairPerItem());
       }
     }
   }
 
   public float getChargedPercent(ItemStack stack, int chargeTimer) {
     return BowItem.getPowerForTime(this.getUseDuration(stack) - chargeTimer);
+  }
+
+  @Override
+  public Rarity getRarity(ItemStack stack) {
+    if (hasEnergy) {
+      return Rarity.EPIC; //uses energy
+    }
+    return super.getRarity(stack);
+  }
+
+  @Override
+  public int getBarColor(ItemStack stack) {
+    if (hasEnergy) {
+      return TextureRegistry.COLOUR_RF_BAR;
+    }
+    return super.getBarColor(stack);
   }
 
   @Override
@@ -127,7 +167,7 @@ public class ItemBaseCyclic extends Item {
   @Override
   public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt) {
     if (this.hasEnergy) {
-      return new CapabilityProviderEnergyStack(16000);
+      return new CapabilityProviderEnergyStack(MAX_ENERGY);
     }
     return super.initCapabilities(stack, nbt);
   }
@@ -153,9 +193,14 @@ public class ItemBaseCyclic extends Item {
   @Override
   public void readShareTag(ItemStack stack, CompoundTag nbt) {
     if (hasEnergy && nbt != null) {
-      CompoundTag stackTag = stack.getOrCreateTag();
-      stackTag.putInt(ENERGYTT, nbt.getInt(ENERGYTT));
+      final CompoundTag stackTag = stack.getOrCreateTag();
+      final int serverEnergyValue = nbt.getInt(ENERGYTT);
+      stackTag.putInt(ENERGYTT, serverEnergyValue);
       stackTag.putInt(ENERGYTTMAX, nbt.getInt(ENERGYTTMAX));
+      final IEnergyStorage storage = stack.getCapability(CapabilityEnergy.ENERGY, null).orElse(null);
+      if (storage instanceof CustomEnergyStorage energy) {
+        energy.setEnergy(serverEnergyValue);
+      }
     }
     super.readShareTag(stack, nbt);
   }
